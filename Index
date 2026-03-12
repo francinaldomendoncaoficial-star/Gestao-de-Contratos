@@ -141,6 +141,9 @@ tr:hover td{background:var(--g50)}
   <button onclick="abrirConfigApi()" title="Configurar URL da API" style="background:none;border:1px solid #ccc;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;color:#555;display:flex;align-items:center;gap:5px">⚙️ API</button>
 </div>
 
+  <div id="cnt"></div>
+</div>
+
 <!-- Modal configuração da API -->
 <div id="modal-api" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
   <div style="background:#fff;border-radius:10px;padding:28px;width:520px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.2)">
@@ -155,8 +158,6 @@ tr:hover td{background:var(--g50)}
         style="padding:8px 18px;border:none;border-radius:6px;background:#1565C0;color:#fff;cursor:pointer;font-weight:600">Salvar</button>
     </div>
   </div>
-</div>
-  <div id="cnt"></div>
 </div>
 
 <div id="lov" class="lov"><div class="sp"></div><div style="font-size:12px;color:#666">Aguarde...</div></div>
@@ -185,7 +186,7 @@ function toast(msg,type='ok'){
 }
 // URL do Web App do Apps Script — configurável pelo usuário na tela
 function getApiUrl(){
-  return localStorage.getItem('API_URL') || '';
+  return localStorage.getItem('API_URL') || 'https://script.google.com/macros/s/AKfycbyaNznOrE21UyU45BKRKkc4IcMfSATXNPTeNAeIRWijLCaIht9thKZwEetxN1zbXd57Hw/exec';
 }
 function api(action,payload={}){
   const url = getApiUrl();
