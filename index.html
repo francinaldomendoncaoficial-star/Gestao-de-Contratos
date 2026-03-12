@@ -409,37 +409,69 @@ pages.dashboard=async function(){
   cnt.innerHTML='<div class="sp" style="margin:40px auto"></div>';
   load(true);
   try{
-    const d=await api('getDashboard',{});
-    const r=d.resumo;
-    const maxSeg=Math.max(...(d.porSegmento||[]).map(s=>s.totalContratado||0),1);
+    const [ccsDisp,segsDisp,clisDisp]=await Promise.all([
+      api('getCCsDisponiveis',{}),
+      api('getSeguimentos',{}),
+      api('getClientes',{})
+    ]);
+    const segs=segsDisp.map(s=>s.NOME);
+    const clis=[...new Set(clisDisp.map(c=>c.NOME_CLIENTE))];
+    // Barra de filtros
     cnt.innerHTML=`
-    <div class="kpig">
-      <div class="kpi b"><div class="kl">Contratos Ativos</div><div class="kv">${r.ativos}</div><div class="ks">de ${r.totalContratos} total</div></div>
-      <div class="kpi g"><div class="kl">Total Contratado</div><div class="kv">${fmt.$s(r.totCtrt)}</div><div class="ks">${fmt.pct(r.totMed,r.totCtrt)} medido</div></div>
-      <div class="kpi g"><div class="kl">Total Recebido</div><div class="kv">${fmt.$s(r.totRec)}</div><div class="ks">de ${fmt.$s(r.totFat)} faturado</div></div>
-      <div class="kpi o"><div class="kl">A Receber</div><div class="kv">${fmt.$s(r.totARec)}</div></div>
-      <div class="kpi r"><div class="kl">A Devolver</div><div class="kv td">−${fmt.$s(r.totADev)}</div></div>
-      <div class="kpi pu"><div class="kl">Saldo Líquido</div><div class="kv ${r.saldoLiquido>=0?'ts':'td'}">${fmt.$s(r.saldoLiquido)}</div></div>
-      <div class="kpi ${r.nfsVencidas>0?'r':'b'}"><div class="kl">NFs Vencidas</div><div class="kv">${r.nfsVencidas}</div></div>
-      <div class="kpi o"><div class="kl">Vcto em 30d</div><div class="kv">${r.nfsVencendo}</div></div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-      <div class="card"><div class="ct">📊 Por Segmento</div>
-        ${(d.porSegmento||[]).map(s=>`<div style="margin-bottom:10px">
-          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px">
-            <span>${s.segmento} <span style="color:#999;font-size:11px">(${s.count})</span></span>
-            <span class="fb">${fmt.$s(s.totalContratado)}</span>
+      <div class="tbar" style="flex-wrap:wrap;gap:8px;margin-bottom:14px">
+        ${ccsDisp.length?`<select id="fg-cc" style="padding:6px 10px;border:1px solid var(--g300);border-radius:6px;font-size:12px;min-width:140px" onchange="window._dashRender()">
+          <option value="">🏗️ Todos os CCs</option>
+          ${ccsDisp.map(c=>`<option value="${c}">${c.length>45?c.slice(0,45)+'…':c}</option>`).join('')}
+        </select>`:''}
+        <select id="fg-seg" style="padding:6px 10px;border:1px solid var(--g300);border-radius:6px;font-size:12px;min-width:130px" onchange="window._dashRender()">
+          <option value="">🔖 Todos seg.</option>
+          ${segs.map(s=>`<option value="${s}">${s}</option>`).join('')}
+        </select>
+        <select id="fg-cli" style="padding:6px 10px;border:1px solid var(--g300);border-radius:6px;font-size:12px;min-width:130px" onchange="window._dashRender()">
+          <option value="">🏢 Todos clientes</option>
+          ${clis.map(c=>`<option value="${c}">${c}</option>`).join('')}
+        </select>
+      </div>
+      <div id="dash-body"></div>`;
+    window._dashRender=async()=>{
+      const filtros={cc:_fgVal('fg-cc'),segmento:_fgVal('fg-seg'),cliente:_fgVal('fg-cli')};
+      load(true);
+      try{
+        const d=await api('getDashboard',filtros);
+        const r=d.resumo;
+        const maxSeg=Math.max(...(d.porSegmento||[]).map(s=>s.totalContratado||0),1);
+        document.getElementById('dash-body').innerHTML=`
+        <div class="kpig">
+          <div class="kpi b"><div class="kl">Contratos Ativos</div><div class="kv">${r.ativos}</div><div class="ks">de ${r.totalContratos} total</div></div>
+          <div class="kpi g"><div class="kl">Total Contratado</div><div class="kv">${fmt.$s(r.totCtrt)}</div><div class="ks">${fmt.pct(r.totMed,r.totCtrt)} medido</div></div>
+          <div class="kpi g"><div class="kl">Total Recebido</div><div class="kv">${fmt.$s(r.totRec)}</div><div class="ks">de ${fmt.$s(r.totFat)} faturado</div></div>
+          <div class="kpi o"><div class="kl">A Receber</div><div class="kv">${fmt.$s(r.totARec)}</div></div>
+          <div class="kpi r"><div class="kl">A Devolver</div><div class="kv td">−${fmt.$s(r.totADev)}</div></div>
+          <div class="kpi pu"><div class="kl">Saldo Líquido</div><div class="kv ${r.saldoLiquido>=0?'ts':'td'}">${fmt.$s(r.saldoLiquido)}</div></div>
+          <div class="kpi ${r.nfsVencidas>0?'r':'b'}"><div class="kl">NFs Vencidas</div><div class="kv">${r.nfsVencidas}</div></div>
+          <div class="kpi o"><div class="kl">Vcto em 30d</div><div class="kv">${r.nfsVencendo}</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div class="card"><div class="ct">📊 Por Segmento</div>
+            ${(d.porSegmento||[]).map(s=>`<div style="margin-bottom:10px">
+              <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px">
+                <span>${s.segmento} <span style="color:#999;font-size:11px">(${s.count})</span></span>
+                <span class="fb">${fmt.$s(s.totalContratado)}</span>
+              </div>
+              <div class="pw"><div class="pb" style="width:${Math.min(100,s.totalContratado/maxSeg*100).toFixed(1)}%"></div></div>
+            </div>`).join('')||'<p style="color:#999">Sem dados</p>'}
           </div>
-          <div class="pw"><div class="pb" style="width:${Math.min(100,s.totalContratado/maxSeg*100).toFixed(1)}%"></div></div>
-        </div>`).join('')||'<p style="color:#999">Sem dados</p>'}
-      </div>
-      <div class="card"><div class="ct">🏢 A Receber por Cliente</div>
-        ${(d.porCliente||[]).slice(0,8).map(c=>`
-          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f5f5f5;font-size:13px">
-            <span>${c.cliente}</span><span class="fb ${c.aReceber>0?'ts':''}">${fmt.$s(c.aReceber)}</span>
-          </div>`).join('')||'<p style="color:#999">Sem dados</p>'}
-      </div>
-    </div>`;
+          <div class="card"><div class="ct">🏢 A Receber por Cliente</div>
+            ${(d.porCliente||[]).slice(0,8).map(c=>`
+              <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f5f5f5;font-size:13px">
+                <span>${c.cliente}</span><span class="fb ${c.aReceber>0?'ts':''}">${fmt.$s(c.aReceber)}</span>
+              </div>`).join('')||'<p style="color:#999">Sem dados</p>'}
+          </div>
+        </div>`;
+      }catch(e){ document.getElementById('dash-body').innerHTML=`<div class="al al-d">❌ ${e.message}</div>`; }
+      finally{ load(false); }
+    };
+    await window._dashRender();
   }catch(e){ cnt.innerHTML=`<div class="al al-d">❌ ${e.message}</div>`; }
   finally{ load(false); }
 };
@@ -452,71 +484,55 @@ pages.encontro=async function(){
   cnt.innerHTML='<div class="sp" style="margin:40px auto"></div>';
   load(true);
   try{
-    const d=await api('getEncontroDeContas',{});
-    const r=d.resumo;
+    const [ccsDisp,clisDisp]=await Promise.all([api('getCCsDisponiveis',{}),api('getClientes',{})]);
+    const clis=[...new Set(clisDisp.map(c=>c.NOME_CLIENTE))];
+    const _render=async()=>{
+      load(true);
+      try{
+        const filtros={cc:_fgVal('enc-cc'),cliente:_fgVal('enc-cli')};
+        const d=await api('getEncontroDeContas',filtros);
+        const r=d.resumo;
+        document.getElementById('enc-body').innerHTML=`
+        <div class="al al-i">📅 Data Base: <strong>${d.dataBase}</strong></div>
+        <div class="ec3">
+          <div class="ecb rec"><div class="el" style="color:var(--g)">A Receber</div><div class="ev ts">${fmt.$(r.totalAReceber)}</div></div>
+          <div class="ecb rec" style="background:var(--rl)"><div class="el" style="color:var(--r)">A Devolver</div><div class="ev td">−${fmt.$(r.totalADevolver)}</div></div>
+          <div class="ecb rec" style="background:${r.saldo>=0?'var(--gl)':'var(--rl)'}"><div class="el">Saldo Líquido</div><div class="ev ${r.saldo>=0?'ts':'td'}">${fmt.$(r.saldo)}</div></div>
+        </div>
+        ${d.porContrato?.length?`
+        <div class="card"><div class="ct">Por Contrato</div><div class="tw"><table>
+          <thead><tr><th>Obra</th><th>CC</th><th>Faturado</th><th>Recebido</th><th>A Receber</th><th>Retenção</th><th>Adiantamento</th><th>Saldo</th></tr></thead>
+          <tbody>${d.porContrato.map(c=>`<tr>
+            <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.nomeObra}</td>
+            <td style="font-size:11px;color:#666;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.cc}</td>
+            <td class="tr2">${fmt.$s(c.totalFaturado)}</td>
+            <td class="tr2 ts">${fmt.$s(c.totalRecebido)}</td>
+            <td class="tr2 ${c.aReceber>0?'ts':''}">${fmt.$s(c.aReceber)}</td>
+            <td class="tr2">${fmt.$s(c.retencaoAberta)}</td>
+            <td class="tr2">${fmt.$s(c.adiantamentoAberto)}</td>
+            <td class="tr2 fb ${c.saldo>=0?'ts':'td'}">${fmt.$s(c.saldo)}</td>
+          </tr>`).join('')}</tbody>
+        </table></div></div>`:''}`;
+      }catch(e){ document.getElementById('enc-body').innerHTML=`<div class="al al-d">❌ ${e.message}</div>`; }
+      finally{ load(false); }
+    };
     cnt.innerHTML=`
-    <div class="al al-i">📅 Data Base: <strong>${d.dataBase}</strong></div>
-    <div class="ec3">
-      <div class="ecb rec"><div class="el" style="color:var(--g)">A Receber</div><div class="ev ts">${fmt.$(r.totalAReceber)}</div></div>
-      <div class="ecb dev"><div class="el" style="color:var(--r)">A Devolver</div><div class="ev td">−${fmt.$(r.totalADevolver)}</div></div>
-      <div class="ecb sal"><div class="el" style="color:var(--p)">Saldo Líquido Final</div><div class="ev" style="color:${r.saldoLiquido>=0?'var(--p)':'var(--r)'}">${fmt.$(r.saldoLiquido)}</div></div>
-    </div>
-    <div class="card">
-      <div class="ct">📊 Resumo por Natureza</div>
-      <div class="tw"><table>
-        <thead><tr><th>Natureza</th><th>Descrição</th><th class="tr2">Valor Líquido</th></tr></thead>
-        <tbody>
-          <tr><td class="ts fb">(+) Faturado a Receber</td><td>NFs emitidas pendentes</td><td class="tr2 ts fb">${fmt.$(r.faturadoAReceber)}</td></tr>
-          <tr><td class="ts fb">(+) Medido a Faturar</td><td>BMs aguardando NF</td><td class="tr2 ts fb">${fmt.$(r.medidoAFaturar)}</td></tr>
-          <tr><td class="ts fb">(+) Retenções</td><td>Saldo a ser devolvido</td><td class="tr2 ts fb">${fmt.$(r.retencoesAReceber)}</td></tr>
-          <tr><td class="ts fb">(+) Juros e Multas</td><td>Encargos por atraso</td><td class="tr2 ts fb">${fmt.$(r.jurosAReceber)}</td></tr>
-          <tr><td class="ts fb">(+) Aditivos Pleiteados</td><td>Em negociação</td><td class="tr2 ts fb">${fmt.$(r.aditivosPleiteados)}</td></tr>
-          <tr style="background:#FFF8F8"><td class="td fb">(−) Adiantamentos em Aberto</td><td>Não amortizados</td><td class="tr2 td fb">−${fmt.$(r.adiantamentosEmAberto)}</td></tr>
-          <tr style="background:#FFF8F8"><td class="td fb">(−) Outros A Devolver</td><td>Passivos diversos</td><td class="tr2 td fb">−${fmt.$(r.outrosADevolver)}</td></tr>
-          <tr style="background:var(--gl);font-weight:700"><td colspan="2" class="tr2">SALDO LÍQUIDO FINAL</td><td class="tr2 ${r.saldoLiquido>=0?'ts':'td'} fb">${fmt.$(r.saldoLiquido)}</td></tr>
-        </tbody>
-      </table></div>
-    </div>
-    <div class="card">
-      <div class="ct">📋 Saldos Contratuais</div>
-      <div class="tw"><table>
-        <thead><tr><th>Obra</th><th>Status</th><th class="tr2">Orig.</th><th class="tr2">Aditivos</th><th class="tr2">Total</th><th class="tr2">Acumulado</th><th class="tr2">Saldo</th></tr></thead>
-        <tbody>
-          ${d.saldosContratuais.map(s=>`<tr>
-            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.obra}</td>
-            <td>${sb(s.situacao)}</td>
-            <td class="tr2">${fmt.$(s.contratadoOriginal)}</td><td class="tr2">${fmt.$(s.aditivos)}</td>
-            <td class="tr2 fb">${fmt.$(s.totalContratado)}</td>
-            <td class="tr2">${fmt.$(s.acumuladoAtual)}</td>
-            <td class="tr2 ${s.saldoContratual>0?'ts':'tm'} fb">${fmt.$(s.saldoContratual)}</td>
-          </tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:#999;padding:16px">Sem dados</td></tr>'}
-        </tbody>
-      </table></div>
-    </div>
-    <div class="card">
-      <div class="ct">📏 Medições a Faturar</div>
-      <div class="tw"><table>
-        <thead><tr><th>Obra</th><th>BM</th><th>Emissão</th><th class="tr2">Bruto</th><th class="tr2">Retenções</th><th class="tr2">Descontos</th><th class="tr2">Adiant.Desc.</th><th class="tr2">Reembolsos</th><th class="tr2">A Faturar</th></tr></thead>
-        <tbody>
-          ${d.detalheMedicoes.map(m=>`<tr>
-            <td>${m.obra}</td><td>BM ${m.bm}</td><td>${fmt.d(m.emissao)}</td>
-            <td class="tr2">${fmt.$(m.bruto)}</td>
-            <td class="tr2 td">${fmt.$(m.retencoes)}</td>
-            <td class="tr2 td">${fmt.$(m.descontos)}</td>
-            <td class="tr2 td">${fmt.$(m.adiantDesc)}</td>
-            <td class="tr2 ts">${fmt.$(m.reembolsos)}</td>
-            <td class="tr2 fb ts">${fmt.$(m.liquidoAFaturar)}</td>
-          </tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:#999;padding:16px">Sem medições a faturar</td></tr>'}
-        </tbody>
-      </table></div>
-    </div>`;
+      <div class="tbar" style="flex-wrap:wrap;gap:8px;margin-bottom:14px">
+        ${ccsDisp.length?`<select id="enc-cc" style="padding:6px 10px;border:1px solid var(--g300);border-radius:6px;font-size:12px;min-width:140px" onchange="_render()">
+          <option value="">🏗️ Todos os CCs</option>
+          ${ccsDisp.map(c=>`<option value="${c}">${c.length>45?c.slice(0,45)+'…':c}</option>`).join('')}
+        </select>`:''}
+        <select id="enc-cli" style="padding:6px 10px;border:1px solid var(--g300);border-radius:6px;font-size:12px;min-width:130px" onchange="_render()">
+          <option value="">🏢 Todos clientes</option>
+          ${clis.map(c=>`<option value="${c}">${c}</option>`).join('')}
+        </select>
+      </div>
+      <div id="enc-body"></div>`;
+    await _render();
   }catch(e){ cnt.innerHTML=`<div class="al al-d">❌ ${e.message}</div>`; }
   finally{ load(false); }
 };
 
-// ============================================================
-// SEGUIMENTOS
-// ============================================================
 pages.seguimentos=async function(){
   load(true); try{
     const segs=await api('getSeguimentos',{}); S.seguimentos=segs;
@@ -638,14 +654,15 @@ function openCliModal(d={}){
 // ============================================================
 pages.contratos=async function(){
   load(true); try{
-    const [cs,cls]=await Promise.all([api('getContratos',{}),api('getClientes',{})]);
+    const [cs,cls,ccsDisp]=await Promise.all([api('getContratos',{}),api('getClientes',{}),api('getCCsDisponiveis',{})]);
     S.contratos=cs; S.clientes=cls; window._ctrs=cs;
     const segs=[...new Set(cs.map(c=>c.SEGMENTO).filter(Boolean))];
     document.getElementById('cnt').innerHTML=`
-    <div class="tbar">
-      <div class="sb2"><input id="ctr-s" placeholder="Buscar..."></div>
-      <select class="fsel" id="f-st" onchange="filtrarCtrs()"><option value="">Todos status</option><option>Ativa</option><option>Inativa</option><option>Encerrada</option></select>
-      <select class="fsel" id="f-sg" onchange="filtrarCtrs()"><option value="">Todos seg.</option>${segs.map(s=>`<option>${s}</option>`).join('')}</select>
+    <div class="tbar" style="flex-wrap:wrap;gap:6px">
+      <div class="sb2"><input id="ctr-s" placeholder="🔍 Buscar..."></div>
+      ${ccsDisp.length?`<select class="fsel" id="f-cc" onchange="filtrarCtrs()"><option value="">🏗️ Todos CCs</option>${ccsDisp.map(c=>`<option value="${c}">${c.length>40?c.slice(0,40)+'…':c}</option>`).join('')}</select>`:''}
+      <select class="fsel" id="f-st" onchange="filtrarCtrs()"><option value="">📌 Todos status</option><option>Ativa</option><option>Inativa</option><option>Encerrada</option></select>
+      <select class="fsel" id="f-sg" onchange="filtrarCtrs()"><option value="">🔖 Todos seg.</option>${segs.map(s=>`<option>${s}</option>`).join('')}</select>
       <select class="fsel" id="f-ct" onchange="filtrarCtrs()"><option value="">Todas contratadas</option><option>Conectrom</option><option>EGT</option><option>Energias</option></select>
       <div class="tr"><button class="btn bp" onclick="openCtrModal()">➕ Novo Contrato</button></div>
     </div>
@@ -660,12 +677,16 @@ pages.contratos=async function(){
 };
 function filtrarCtrs(){
   const sv=(document.getElementById('ctr-s')?.value||'').toLowerCase();
+  const cc=document.getElementById('f-cc')?.value||'';
   const st=document.getElementById('f-st')?.value||'';
   const sg=document.getElementById('f-sg')?.value||'';
   const ct=document.getElementById('f-ct')?.value||'';
   let d=window._ctrs||[];
-  if(sv) d=d.filter(c=>[c.NOME_OBRA,c.NOME_CLIENTE,c.NUMERO_CONTRATO].join(' ').toLowerCase().includes(sv));
-  if(st) d=d.filter(c=>c.STATUS===st); if(sg) d=d.filter(c=>c.SEGMENTO===sg); if(ct) d=d.filter(c=>c.CONTRATADA===ct);
+  if(sv) d=d.filter(c=>[c.NOME_OBRA,c.NOME_CLIENTE,c.NUMERO_CONTRATO,c.CENTRO_CUSTO].join(' ').toLowerCase().includes(sv));
+  if(cc) d=d.filter(c=>c.CENTRO_CUSTO===cc);
+  if(st) d=d.filter(c=>c.STATUS===st);
+  if(sg) d=d.filter(c=>c.SEGMENTO===sg);
+  if(ct) d=d.filter(c=>c.CONTRATADA===ct);
   renderCtrs(d);
 }
 function renderCtrs(data){
@@ -1293,15 +1314,26 @@ function toggleAdtTipo(t){
 // ============================================================
 pages.medicoes=async function(){
   load(true); try{
-    const [ms,cs]=await Promise.all([api('getMedicoes',{}),api('getContratos',{})]);
+    const [ms,cs,ccsDisp]=await Promise.all([api('getMedicoes',{}),api('getContratos',{}),api('getCCsDisponiveis',{})]);
     const cm={}; cs.forEach(c=>cm[c.ID_CONTRATO]=c.NOME_OBRA);
+    window._meds=ms;
     document.getElementById('cnt').innerHTML=`
-    <div class="tbar"><div class="tr"><button class="btn bp" onclick="openMedModal()">➕ Nova Medição</button></div></div>
+    <div class="tbar" style="flex-wrap:wrap;gap:6px">
+      ${ccsDisp.length?`<select id="med-cc" style="padding:6px 10px;border:1px solid var(--g300);border-radius:6px;font-size:12px" onchange="filtrarMeds()"><option value="">🏗️ Todos CCs</option>${ccsDisp.map(c=>`<option value="${c}">${c.length>40?c.slice(0,40)+'…':c}</option>`).join('')}</select>`:''}
+      <select id="med-ctr" style="padding:6px 10px;border:1px solid var(--g300);border-radius:6px;font-size:12px;min-width:160px" onchange="filtrarMeds()">
+        <option value="">📄 Todos contratos</option>
+        ${cs.map(c=>`<option value="${c.ID_CONTRATO}">${c.NOME_OBRA||c.ID_CONTRATO}</option>`).join('')}
+      </select>
+      <select id="med-st" style="padding:6px 10px;border:1px solid var(--g300);border-radius:6px;font-size:12px" onchange="filtrarMeds()">
+        <option value="">📌 Todos status</option><option>Não Faturado</option><option>Parcialmente Faturado</option><option>Faturado</option><option>Cancelado</option>
+      </select>
+      <div class="tr"><button class="btn bp" onclick="openMedModal()">➕ Nova Medição</button></div>
+    </div>
     <div class="card">
       <div class="al al-i" style="margin-bottom:14px">⚡ Clique no botão <strong>⚡</strong> de cada BM para gerenciar eventos financeiros (retenções, descontos, adiantamentos, reembolsos).</div>
       <div class="tw"><table>
         <thead><tr><th>Obra</th><th>BM</th><th>Emissão</th><th class="tr2">Bruto</th><th class="tr2">Ret.</th><th class="tr2">Desc.</th><th class="tr2">Adiant.</th><th class="tr2">Reem.</th><th class="tr2">Líquido</th><th>Status</th><th></th></tr></thead>
-        <tbody>${ms.map(m=>`<tr>
+        <tbody id="meds-tb">${ms.map(m=>`<tr>
           <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cm[m.ID_CONTRATO]||'—'}</td>
           <td>BM ${m.NUMERO_BM}</td><td>${fmt.d(m.DATA_EMISSAO)}</td>
           <td class="tr2">${fmt.$(m.VALOR_MEDIDO_BRUTO)}</td>
@@ -1381,9 +1413,41 @@ function ccPick(sel, inputId, idField, ccField){
 // ============================================================
 // NOTAS FISCAIS
 // ============================================================
+function filtrarMeds(){
+  const cc  = document.getElementById('med-cc')?.value||'';
+  const ctr = document.getElementById('med-ctr')?.value||'';
+  const st  = document.getElementById('med-st')?.value||'';
+  const tb  = document.getElementById('meds-tb');
+  if(!tb || !window._meds) return;
+  let d = window._meds;
+  if(cc)  d = d.filter(m => m.CENTRO_CUSTO === cc);
+  if(ctr) d = d.filter(m => m.ID_CONTRATO  === ctr);
+  if(st)  d = d.filter(m => m.STATUS_MEDICAO === st);
+  // Reusar o map de nomes de contrato
+  const cm = {};
+  (window._ctrs||[]).forEach(c => cm[c.ID_CONTRATO]=c.NOME_OBRA);
+  tb.innerHTML = d.map(m=>`<tr>
+    <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cm[m.ID_CONTRATO]||'—'}</td>
+    <td>BM ${m.NUMERO_BM}</td><td>${fmt.d(m.DATA_EMISSAO)}</td>
+    <td class="tr2">${fmt.$(m.VALOR_MEDIDO_BRUTO)}</td>
+    <td class="tr2 td">${fmt.$(m.TOTAL_RETENCOES)}</td>
+    <td class="tr2 td">${fmt.$(m.TOTAL_DESCONTOS)}</td>
+    <td class="tr2 td">${fmt.$(m.TOTAL_ADIANTAMENTOS_DESC)}</td>
+    <td class="tr2 ts">${fmt.$(m.TOTAL_REEMBOLSOS)}</td>
+    <td class="tr2 fb">${fmt.$(m.VALOR_LIQUIDO_MEDICAO)}</td>
+    <td>${sb(m.STATUS_MEDICAO)}</td>
+    <td style="white-space:nowrap">
+      <button class="bi" title="Eventos Financeiros" onclick="openEventosMedModal('${m.ID_MEDICAO}','BM ${m.NUMERO_BM}','${m.ID_CONTRATO}','${(m.CENTRO_CUSTO||'').replace(/'/g,"\\'")}',${fmt.n(m.VALOR_MEDIDO_BRUTO)},pages.medicoes)">⚡</button>
+      <button class="bi" onclick='openMedModal(${JSON.stringify(m)})'>✏️</button>
+      <button class="bi" onclick="delRow('MEDICOES','${m.ID_MEDICAO}',pages.medicoes)">🗑️</button>
+    </td>
+  </tr>`).join('')||'<tr><td colspan="11" style="text-align:center;color:#999;padding:16px">Nenhuma medição</td></tr>';
+}
+
 pages.notas=async function(){
   load(true); try{
-    const [ns,cs]=await Promise.all([api('getNotasFiscais',{}),api('getContratos',{})]);
+    const [ns,cs,ccsDisp]=await Promise.all([api('getNotasFiscais',{}),api('getContratos',{}),api('getCCsDisponiveis',{})]);
+    window._nfs=ns;
     const cm={}; cs.forEach(c=>cm[c.ID_CONTRATO]=c.NOME_OBRA);
     document.getElementById('cnt').innerHTML=`
     <div class="tbar"><div class="tr"><button class="btn bp" onclick="openNFModal()">➕ Nova Nota Fiscal</button></div></div>
@@ -1500,7 +1564,8 @@ function nfFillFromBM(sel){ const v=sel.selectedOptions[0]?.dataset?.val; const 
 // ============================================================
 pages.recebimentos=async function(){
   load(true); try{
-    const [rs,ns,cs]=await Promise.all([api('getRecebimentos',{}),api('getNotasFiscais',{}),api('getContratos',{})]);
+    const [rs,ns,cs,ccsDisp]=await Promise.all([api('getRecebimentos',{}),api('getNotasFiscais',{}),api('getContratos',{}),api('getCCsDisponiveis',{})]);
+    window._recs=rs;
     const nm={}; ns.forEach(n=>nm[n.ID_NF]=n.NUMERO_NF);
     const cm={}; cs.forEach(c=>cm[c.ID_CONTRATO]=c.NOME_OBRA);
     document.getElementById('cnt').innerHTML=`
@@ -1815,7 +1880,7 @@ async function delRow(aba,id,afterFn){
 // PÁGINA: USUÁRIOS (admin)
 // ============================================================
 pages.usuarios = async function(){
-  if(S.sessao?.perfil !== 'admin'){ toast('Acesso restrito.','err'); return; }
+  if(!['admin','master'].includes(S.sessao?.perfil)){ toast('Acesso restrito.','err'); return; }
   load(true); try{
     const us = await api('getUsuarios',{});
     const statusBadge = s => ({
@@ -2031,6 +2096,52 @@ async function salvarNovaSenha(){
 }
 
 
+
+// ============================================================
+// FILTROS GLOBAIS
+// ============================================================
+const FG = { cc:'', cliente:'', segmento:'', status:'', periodo:'' };
+
+function _buildFiltroBar(opts = {}) {
+  // opts: { ccs, clientes, segmentos, status, periodo, extra }
+  const selStyle = 'padding:6px 10px;border:1px solid var(--g300);border-radius:6px;font-size:12px;background:#fff;min-width:130px';
+  let html = '<div class="tbar" style="flex-wrap:wrap;gap:8px">';
+
+  if(opts.ccs && opts.ccs.length > 0) html += `
+    <select id="fg-cc" style="${selStyle}" onchange="FG.cc=this.value;${opts.onChange||''}">
+      <option value="">🏗️ Todos os CCs</option>
+      ${opts.ccs.map(c=>`<option value="${c}">${c.length>40?c.slice(0,40)+'…':c}</option>`).join('')}
+    </select>`;
+
+  if(opts.clientes) html += `
+    <select id="fg-cli" style="${selStyle}" onchange="FG.cliente=this.value;${opts.onChange||''}">
+      <option value="">🏢 Todos clientes</option>
+      ${opts.clientes.map(c=>`<option value="${c}">${c}</option>`).join('')}
+    </select>`;
+
+  if(opts.segmentos) html += `
+    <select id="fg-seg" style="${selStyle}" onchange="FG.segmento=this.value;${opts.onChange||''}">
+      <option value="">🔖 Todos seg.</option>
+      ${opts.segmentos.map(s=>`<option value="${s}">${s}</option>`).join('')}
+    </select>`;
+
+  if(opts.status) html += `
+    <select id="fg-st" style="${selStyle}" onchange="FG.status=this.value;${opts.onChange||''}">
+      <option value="">📌 Todos status</option>
+      ${opts.status.map(s=>`<option value="${s}">${s}</option>`).join('')}
+    </select>`;
+
+  if(opts.busca !== false) html += `
+    <input id="fg-busca" placeholder="🔍 Buscar..." style="padding:6px 10px;border:1px solid var(--g300);border-radius:6px;font-size:12px;min-width:160px" oninput="${opts.onChange||''}">`;
+
+  if(opts.extra) html += opts.extra;
+  if(opts.botao) html += `<div style="flex:1;display:flex;justify-content:flex-end">${opts.botao}</div>`;
+  html += '</div>';
+  return html;
+}
+
+function _fgVal(id) { return document.getElementById(id)?.value || ''; }
+
 // ============================================================
 // AUTENTICAÇÃO
 // ============================================================
@@ -2243,7 +2354,7 @@ async function init(){
       // Valida token no servidor
       const valido = await api('verificarSessao', { token: s.token }, true).catch(()=>null);
       if(valido) {
-        S.sessao = { ...s, ...valido };
+        S.sessao = { ...valido, token: s.token };
         localStorage.setItem('sessao', JSON.stringify(S.sessao));
         _aplicarSessao(S.sessao);
         esconderAuthScreen();
