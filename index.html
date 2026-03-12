@@ -762,6 +762,253 @@ async function munLoadCidades(uf, selCidade=''){
 // Funções auxiliares de formato decimal para %
 if(!fmt.pct2) fmt.pct2 = v => v==null||v===''?'—': parseFloat(v).toFixed(2).replace('.',',')+' %';
 
+// ============================================================
+// ITENS DO CONTRATO — modal planilha orçamentária
+// ============================================================
+async function openItensContratoModal(idContrato, nomeObra){
+  load(true);
+  let itens = [];
+  try { itens = await api('getItensContrato',{idContrato}); } catch(_){}
+  load(false);
+
+  // Estado local da planilha
+  let _itens = itens.length ? itens.map(i=>({...i})) : [];
+  let _nextTmp = -1; // IDs temporários negativos para novos itens
+
+  function _render(){
+    const tbody = document.getElementById('itc-tbody');
+    if(!tbody) return;
+    // Recalcular pais
+    const codigos = _itens.map(i=>i.CODIGO_ITEM);
+    const ehPai = c => codigos.some(x => x!==c && x.startsWith(c+'.'));
+    // Calcular valor de cada item
+    _itens.forEach(item=>{
+      item._EH_PAI = ehPai(item.CODIGO_ITEM);
+      item._NIVEL  = (item.CODIGO_ITEM.match(/\./g)||[]).length;
+      if(!item._EH_PAI) {
+        item._VALOR_CALC = (parseFloat(item.QUANTIDADE)||0)*(parseFloat(item.PRECO_UNITARIO)||0);
+      } else {
+        item._VALOR_CALC = _itens
+          .filter(x=>!ehPai(x.CODIGO_ITEM)&&x.CODIGO_ITEM.startsWith(item.CODIGO_ITEM+'.'))
+          .reduce((s,x)=>s+(parseFloat(x.QUANTIDADE)||0)*(parseFloat(x.PRECO_UNITARIO)||0),0);
+      }
+    });
+    // Total geral
+    const total = _itens.filter(i=>!i._EH_PAI)
+      .reduce((s,i)=>s+(parseFloat(i.QUANTIDADE)||0)*(parseFloat(i.PRECO_UNITARIO)||0),0);
+    document.getElementById('itc-total').textContent = fmt.$(total);
+
+    tbody.innerHTML = _itens.map((item,idx)=>{
+      const pad = item._NIVEL * 20;
+      const valFmt = item._EH_PAI
+        ? `<span style="color:#666;font-style:italic">${fmt.$(item._VALOR_CALC)}</span>`
+        : `<span style="font-weight:700;color:var(--g)">${fmt.$(item._VALOR_CALC)}</span>`;
+      return `<tr data-idx="${idx}" style="background:${item._EH_PAI?'#F8F9FA':'#fff'}">
+        <td style="padding:4px 6px">
+          <div style="display:flex;align-items:center;gap:4px;padding-left:${pad}px">
+            <input value="${item.CODIGO_ITEM}" data-field="CODIGO_ITEM" data-idx="${idx}"
+              style="width:80px;padding:3px 5px;border:1px solid var(--g200);border-radius:4px;font-size:12px;font-family:monospace"
+              oninput="itcUpdate(${idx},'CODIGO_ITEM',this.value)">
+          </div>
+        </td>
+        <td style="padding:4px 6px">
+          <input value="${item.DESCRICAO||''}" data-field="DESCRICAO" data-idx="${idx}"
+            style="width:100%;padding:3px 5px;border:1px solid var(--g200);border-radius:4px;font-size:12px;font-weight:${item._EH_PAI?'700':'400'}"
+            oninput="itcUpdate(${idx},'DESCRICAO',this.value)">
+        </td>
+        <td style="padding:4px 6px">
+          ${item._EH_PAI ? '<span style="color:#ccc">—</span>' :
+            `<input value="${item.UNIDADE||''}" data-idx="${idx}"
+              style="width:60px;padding:3px 5px;border:1px solid var(--g200);border-radius:4px;font-size:12px;text-align:center"
+              oninput="itcUpdate(${idx},'UNIDADE',this.value)">`}
+        </td>
+        <td style="padding:4px 6px">
+          ${item._EH_PAI ? '<span style="color:#ccc">—</span>' :
+            `<input type="number" step="0.01" value="${item.QUANTIDADE||''}" data-idx="${idx}"
+              style="width:90px;padding:3px 5px;border:1px solid var(--g200);border-radius:4px;font-size:12px;text-align:right"
+              oninput="itcUpdate(${idx},'QUANTIDADE',this.value)">`}
+        </td>
+        <td style="padding:4px 6px">
+          ${item._EH_PAI ? '<span style="color:#ccc">—</span>' :
+            `<input type="number" step="0.01" value="${item.PRECO_UNITARIO||''}" data-idx="${idx}"
+              style="width:110px;padding:3px 5px;border:1px solid var(--g200);border-radius:4px;font-size:12px;text-align:right"
+              oninput="itcUpdate(${idx},'PRECO_UNITARIO',this.value)">`}
+        </td>
+        <td style="padding:4px 8px;text-align:right;min-width:110px">${valFmt}</td>
+        <td style="padding:4px 6px;white-space:nowrap">
+          <button class="bi" title="Adicionar filho" onclick="itcAddFilho(${idx})">➕</button>
+          <button class="bi" title="Mover para cima" onclick="itcMover(${idx},-1)">⬆️</button>
+          <button class="bi" title="Mover para baixo" onclick="itcMover(${idx},1)">⬇️</button>
+          <button class="bi" title="Excluir" onclick="itcDel(${idx})">🗑️</button>
+        </td>
+      </tr>`;
+    }).join('') || `<tr><td colspan="7" style="text-align:center;color:#999;padding:20px">
+      Nenhum item. Clique em "➕ Novo Item Raiz" para começar.</td></tr>`;
+  }
+
+  window._itcState = { itens:_itens, idContrato, nomeObra, render:_render };
+
+  modal(`📋 Planilha de Itens — ${nomeObra}`, `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <div style="display:flex;gap:8px">
+        <button class="btn" style="background:var(--g);color:#fff;padding:6px 14px;font-size:12px"
+          onclick="itcAddRaiz()">➕ Novo Item Raiz</button>
+        <button class="btn" style="background:#1565C0;color:#fff;padding:6px 14px;font-size:12px"
+          onclick="itcImportarExcel()">📥 Colar do Excel</button>
+      </div>
+      <div style="font-size:13px;color:#666">
+        Total: <strong id="itc-total" style="font-size:16px;color:var(--g)">R$ 0,00</strong>
+      </div>
+    </div>
+    <div style="overflow-x:auto;max-height:65vh;overflow-y:auto">
+      <table style="width:100%;border-collapse:collapse;min-width:700px">
+        <thead style="position:sticky;top:0;z-index:2">
+          <tr style="background:#1565C0;color:#fff;font-size:11px">
+            <th style="padding:8px 6px;text-align:left;width:100px">Código</th>
+            <th style="padding:8px 6px;text-align:left">Descrição</th>
+            <th style="padding:8px 6px;text-align:center;width:70px">Unid.</th>
+            <th style="padding:8px 6px;text-align:right;width:100px">Qtd.</th>
+            <th style="padding:8px 6px;text-align:right;width:120px">Preço Unit.</th>
+            <th style="padding:8px 6px;text-align:right;width:120px">Valor</th>
+            <th style="padding:8px 6px;width:120px"></th>
+          </tr>
+        </thead>
+        <tbody id="itc-tbody"></tbody>
+      </table>
+    </div>
+    <div style="margin-top:10px;padding:8px 12px;background:#E3F2FD;border-radius:6px;font-size:12px;color:#1565C0">
+      💡 <strong>Hierarquia:</strong> use códigos como 1, 1.1, 1.1.1 etc.
+      Itens com filhos são agrupadores (sem preço/qtd) — o valor é calculado automaticamente.
+      O valor total atualiza o contrato ao salvar.
+    </div>`,
+  async()=>{
+    load(true);
+    try{
+      const s = window._itcState;
+      await api('saveItensContrato',{
+        idContrato: s.idContrato,
+        centroCusto: s.nomeObra,
+        itens: s.itens.map(i=>({
+          ID_ITEM_CONTRATO: i.ID_ITEM_CONTRATO && !String(i.ID_ITEM_CONTRATO).startsWith('_') ? i.ID_ITEM_CONTRATO : '',
+          CODIGO_ITEM:    i.CODIGO_ITEM,
+          DESCRICAO:      i.DESCRICAO||'',
+          UNIDADE:        i.UNIDADE||'',
+          QUANTIDADE:     parseFloat(i.QUANTIDADE)||0,
+          PRECO_UNITARIO: parseFloat(i.PRECO_UNITARIO)||0,
+          OBSERVACOES:    i.OBSERVACOES||'',
+        }))
+      });
+      closeModal();
+      toast('Planilha salva! Valor do contrato atualizado.');
+      S.contratos=[]; pages.contratos();
+    }catch(e){ toast(e.message,'err'); }
+    finally{ load(false); }
+  }, 'molg');
+
+  setTimeout(()=>{ _render(); }, 50);
+}
+
+// Helpers de edição da planilha de itens
+function itcUpdate(idx, field, val){
+  const s = window._itcState; if(!s) return;
+  s.itens[idx][field] = val;
+  s.render();
+  // Re-focar o campo após render para não perder o foco
+  setTimeout(()=>{
+    const el = document.querySelector(`[data-idx="${idx}"][data-field="${field}"]`);
+    if(el){ el.focus(); el.setSelectionRange && el.setSelectionRange(el.value.length, el.value.length); }
+  },10);
+}
+function itcAddRaiz(){
+  const s = window._itcState; if(!s) return;
+  const raizes = s.itens.filter(i=>!i.CODIGO_ITEM.includes('.'));
+  const nextNum = raizes.length > 0
+    ? Math.max(...raizes.map(i=>parseInt(i.CODIGO_ITEM)||0))+1 : 1;
+  s.itens.push({ ID_ITEM_CONTRATO:'_tmp_'+(s.itens.length), CODIGO_ITEM:String(nextNum), DESCRICAO:'', UNIDADE:'', QUANTIDADE:'', PRECO_UNITARIO:'' });
+  s.render();
+}
+function itcAddFilho(idx){
+  const s = window._itcState; if(!s) return;
+  const pai = s.itens[idx];
+  // Filhos diretos do pai
+  const filhos = s.itens.filter(i=>{
+    const p = i.CODIGO_ITEM.split('.');
+    const pp = pai.CODIGO_ITEM.split('.');
+    return i.CODIGO_ITEM !== pai.CODIGO_ITEM && i.CODIGO_ITEM.startsWith(pai.CODIGO_ITEM+'.') && p.length === pp.length+1;
+  });
+  const nextNum = filhos.length > 0
+    ? Math.max(...filhos.map(i=>parseInt(i.CODIGO_ITEM.split('.').pop())||0))+1 : 1;
+  const novoCod = pai.CODIGO_ITEM + '.' + nextNum;
+  // Inserir após o último descendente do pai
+  const ultimoIdx = s.itens.reduce((last, item, i)=>
+    item.CODIGO_ITEM.startsWith(pai.CODIGO_ITEM+'.') ? i : last, idx);
+  s.itens.splice(ultimoIdx+1, 0, { ID_ITEM_CONTRATO:'_tmp_'+(s.itens.length), CODIGO_ITEM:novoCod, DESCRICAO:'', UNIDADE:'', QUANTIDADE:'', PRECO_UNITARIO:'' });
+  s.render();
+}
+function itcDel(idx){
+  const s = window._itcState; if(!s) return;
+  const cod = s.itens[idx].CODIGO_ITEM;
+  // Remove o item e todos os descendentes
+  s.itens = s.itens.filter(i => i.CODIGO_ITEM !== cod && !i.CODIGO_ITEM.startsWith(cod+'.'));
+  s.render();
+}
+function itcMover(idx, dir){
+  const s = window._itcState; if(!s) return;
+  const arr = s.itens; const dest = idx+dir;
+  if(dest<0||dest>=arr.length) return;
+  [arr[idx],arr[dest]]=[arr[dest],arr[idx]];
+  s.render();
+}
+function itcImportarExcel(){
+  // Abre textarea para colar dados TSV do Excel
+  const div = document.createElement('div');
+  div.innerHTML=`<p style="font-size:12px;color:#666;margin:0 0 8px">Cole aqui o conteúdo copiado do Excel (colunas: Código | Descrição | Unidade | Qtd | Preço Unit.)</p>
+    <textarea id="itc-paste" style="width:100%;height:200px;font-size:12px;font-family:monospace;padding:8px;border:1px solid var(--g300);border-radius:6px" placeholder="Cole aqui..."></textarea>`;
+  const overlay = document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;display:flex;align-items:center;justify-content:center';
+  const box = document.createElement('div');
+  box.style.cssText='background:#fff;border-radius:10px;padding:20px;width:600px;max-width:95vw';
+  box.innerHTML='<div style="font-weight:700;margin-bottom:12px">📥 Importar do Excel</div>';
+  box.appendChild(div);
+  const btns = document.createElement('div');
+  btns.style.cssText='display:flex;gap:8px;justify-content:flex-end;margin-top:12px';
+  btns.innerHTML='<button class="btn" onclick="this.closest(\'div[style*=fixed]\').remove()">Cancelar</button><button class="btn bp" onclick="itcProcessarCola(this)">Importar</button>';
+  box.appendChild(btns);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+function itcProcessarCola(btn){
+  const s = window._itcState; if(!s) return;
+  const txt = document.getElementById('itc-paste')?.value||'';
+  const linhas = txt.trim().split('\n').filter(l=>l.trim());
+  let importados=0;
+  for(const linha of linhas){
+    const cols = linha.split('\t');
+    if(cols.length<2) continue;
+    const cod=cols[0]?.trim(), desc=cols[1]?.trim()||'';
+    if(!cod) continue;
+    // Não duplicar por código
+    if(s.itens.find(i=>i.CODIGO_ITEM===cod)) continue;
+    s.itens.push({
+      ID_ITEM_CONTRATO:'_tmp_'+(s.itens.length),
+      CODIGO_ITEM:cod, DESCRICAO:desc,
+      UNIDADE:(cols[2]||'').trim(),
+      QUANTIDADE:(cols[3]||'').trim().replace(',','.'),
+      PRECO_UNITARIO:(cols[4]||'').trim().replace(',','.').replace(/[^\d.]/g,''),
+    });
+    importados++;
+  }
+  // Ordenar por código
+  s.itens.sort((a,b)=>{
+    const pa=a.CODIGO_ITEM.split('.').map(Number), pb=b.CODIGO_ITEM.split('.').map(Number);
+    for(let i=0;i<Math.max(pa.length,pb.length);i++){ const d=(pa[i]||0)-(pb[i]||0); if(d) return d; }
+    return 0;
+  });
+  btn.closest('div[style*=fixed]').remove();
+  s.render();
+  toast(`${importados} itens importados!`);
+}
+
 pages.seguimentos=async function(){
   load(true); try{
     const segs=await api('getSeguimentos',{}); S.seguimentos=segs;
@@ -931,6 +1178,7 @@ function renderCtrs(data){
     <td class="tr2 fb ${fmt.n(c._FATURADO_A_RECEBER)>0?'ts':''}">${fmt.$(c._FATURADO_A_RECEBER)}</td>
     <td style="white-space:nowrap">
       <button class="bi" onclick="openCtrDetalhe('${c.ID_CONTRATO}')" title="Ver">👁️</button>
+      <button class="bi" onclick='openItensContratoModal("${c.ID_CONTRATO}","${(c.CENTRO_CUSTO||c.NOME_OBRA).replace(/"/g,'')}")' title="Planilha de Itens">📋</button>
       <button class="bi" onclick='openCtrModal(${JSON.stringify(c)})' title="Editar">✏️</button>
       <button class="bi" onclick="delRow('CONTRATOS','${c.ID_CONTRATO}',()=>{S.contratos=[];pages.contratos()})" title="Excluir">🗑️</button>
     </td>
@@ -1607,7 +1855,7 @@ async function openMedModal(d={}){
         <input id="cc-med-s" placeholder="🔍 Filtrar por centro de custo..." oninput="ccFilter(this,'cc-med-list','${d.ID_CONTRATO||''}')"
           value="${d.CENTRO_CUSTO||''}" style="padding:7px 9px;border:1px solid var(--g300);border-radius:6px;font-size:13px;width:100%;margin-bottom:4px">
         <select id="cc-med-list" name="_dummy" size="4" style="width:100%;border:1px solid var(--g300);border-radius:6px;font-size:12px"
-          onchange="ccPick(this,'cc-med-s','med-id','med-cc')">
+          onchange="ccPick(this,'cc-med-s','med-id','med-cc');medVerificarItens()">
           ${cs.map(c=>`<option value="${c.ID_CONTRATO}" data-cc="${c.CENTRO_CUSTO||c.NOME_OBRA}" ${d.ID_CONTRATO===c.ID_CONTRATO?'selected':''}>${c.CENTRO_CUSTO||c.NOME_OBRA}</option>`).join('')}
         </select>
       </div>
@@ -1617,22 +1865,182 @@ async function openMedModal(d={}){
       <div class="fgrp"><label>Data Emissão</label><input name="DATA_EMISSAO" type="date" value="${d.DATA_EMISSAO||''}"></div>
       <div class="fgrp"><label>Período Início</label><input name="PERIODO_INICIO" id="med-pi" type="date" value="${d.PERIODO_INICIO||''}"></div>
       <div class="fgrp"><label>Período Fim</label><input name="PERIODO_FIM" id="med-pf" type="date" value="${d.PERIODO_FIM||''}" onchange="validMedDates()"></div>
-      <div class="fgrp"><label>Valor Medido Bruto (R$) *</label><input name="VALOR_MEDIDO_BRUTO" type="number" step="0.01" value="${d.VALOR_MEDIDO_BRUTO||''}" required></div>
+      <div class="fgrp"><label>Valor Medido Bruto (R$)</label>
+        <input name="VALOR_MEDIDO_BRUTO" id="med-bruto" type="number" step="0.01" value="${d.VALOR_MEDIDO_BRUTO||''}"
+          placeholder="Preenchido ao detalhar itens">
+        <small style="color:#999;font-size:11px">Opcional se detalhar itens abaixo</small>
+      </div>
       <div class="fgrp full"><label>URL Documento</label><input name="DOCUMENTO_URL" type="url" value="${d.DOCUMENTO_URL||''}"></div>
       <div class="fgrp full"><label>Observações</label><textarea name="OBSERVACOES">${d.OBSERVACOES||''}</textarea></div>
-      ${d.ID_MEDICAO?`<input type="hidden" name="ID_MEDICAO" value="${d.ID_MEDICAO}">`:''}
+      ${d.ID_MEDICAO?`<input type="hidden" name="ID_MEDICAO" value="${d.ID_MEDICAO}">` :''}
     </form>
-    <div class="al al-i" style="margin-top:8px">💡 Após salvar, use o botão ⚡ para adicionar eventos financeiros (retenções, descontos, reembolsos etc.)</div>`,
+
+    <!-- Seção de detalhamento de itens -->
+    <div id="med-itens-wrap" style="margin-top:14px;display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-weight:700;font-size:14px">📋 Itens Medidos no Período</div>
+        <div style="font-size:13px">Total: <strong id="med-itens-total" style="color:var(--g)">R$ 0,00</strong></div>
+      </div>
+      <div style="overflow-x:auto;max-height:45vh;overflow-y:auto">
+        <table style="width:100%;border-collapse:collapse;min-width:650px">
+          <thead style="position:sticky;top:0;background:#E8EAF6;z-index:2">
+            <tr style="font-size:11px;color:#333">
+              <th style="padding:7px 6px;text-align:left;width:90px">Código</th>
+              <th style="padding:7px 6px;text-align:left">Descrição</th>
+              <th style="padding:7px 6px;text-align:center;width:60px">Unid.</th>
+              <th style="padding:7px 6px;text-align:right;width:90px">Contrat.</th>
+              <th style="padding:7px 6px;text-align:right;width:90px">Acum. Ant.</th>
+              <th style="padding:7px 6px;text-align:right;width:90px">Saldo</th>
+              <th style="padding:7px 6px;text-align:right;width:100px">Qtd. Atual</th>
+              <th style="padding:7px 6px;text-align:right;width:110px">Valor</th>
+            </tr>
+          </thead>
+          <tbody id="med-itens-tbody"></tbody>
+        </table>
+      </div>
+      <div class="al al-i" style="margin-top:8px;font-size:12px">
+        💡 O valor total dos itens preencherá o campo <strong>Valor Medido Bruto</strong> automaticamente.
+      </div>
+    </div>
+
+    <div id="med-sem-itens" style="margin-top:10px">
+      <div class="al al-i" style="font-size:12px">
+        💡 Após salvar, use o botão ⚡ para adicionar eventos financeiros (retenções, descontos, reembolsos etc.)
+      </div>
+    </div>
+    <div id="med-itens-btn-wrap" style="margin-top:10px;display:none">
+      <button class="btn" style="background:#3F51B5;color:#fff;font-size:12px;padding:6px 14px"
+        onclick="medToggleItens()">
+        <span id="med-itens-toggle-txt">📋 Detalhar Itens</span>
+      </button>
+    </div>`,
   async()=>{
     const obj=fdata('fmed');
     obj.ID_CONTRATO=document.getElementById('med-id')?.value||obj.ID_CONTRATO||'';
     obj.CENTRO_CUSTO=document.getElementById('med-cc')?.value||obj.CENTRO_CUSTO||'';
     if(!obj.ID_CONTRATO) return toast('Selecione um contrato!','err');
     if(obj.PERIODO_INICIO&&obj.PERIODO_FIM&&obj.PERIODO_FIM<obj.PERIODO_INICIO) return toast('Período fim não pode ser anterior ao início!','err');
-    load(true); try{ await api('saveMedicao',obj); closeModal(); toast('Medição salva!'); pages.medicoes(); }
-    catch(e){ toast(e.message,'err'); } finally{ load(false); }
+    // Se não digitou valor manual mas tem itens detalhados, usar total dos itens
+    if(!obj.VALOR_MEDIDO_BRUTO && window._medItensState?.totalItens > 0)
+      obj.VALOR_MEDIDO_BRUTO = window._medItensState.totalItens;
+    if(!obj.VALOR_MEDIDO_BRUTO) return toast('Informe o Valor Medido Bruto ou detalhe os itens!','err');
+    load(true);
+    try{
+      const medId = await api('saveMedicao',obj);
+      // Salvar itens detalhados se houver
+      const itState = window._medItensState;
+      if(itState && itState.itens && itState.itensDetalhados){
+        const payload = itState.itens
+          .filter(i=>!i._EH_PAI && parseFloat(i._QTD_INPUT||0) > 0)
+          .map(i=>({ idItemContrato:i.ID_ITEM_CONTRATO, qtdAtual:parseFloat(i._QTD_INPUT||0) }));
+        if(payload.length > 0)
+          await api('saveItensMedicaoLote',{ idMedicao:medId, idContrato:obj.ID_CONTRATO, centroCusto:obj.CENTRO_CUSTO, itens:payload });
+      }
+      closeModal();
+      toast('Medição salva!');
+      pages.medicoes();
+    }catch(e){ toast(e.message,'err'); } finally{ load(false); }
   });
+  // Verificar se contrato já tem itens cadastrados
+  if(d.ID_CONTRATO) setTimeout(()=>medVerificarItens(d.ID_MEDICAO), 200);
 }
+
+async function medVerificarItens(idMedicaoAtual=''){
+  const idContrato = document.getElementById('med-id')?.value;
+  if(!idContrato) return;
+  try{
+    const itens = await api('getItensMedicaoDetalhado',{idContrato, idMedicao: idMedicaoAtual||''});
+    const folhas = itens.filter(i=>!i._EH_PAI);
+    const btnWrap = document.getElementById('med-itens-btn-wrap');
+    const semItens = document.getElementById('med-sem-itens');
+    if(folhas.length > 0){
+      if(btnWrap) btnWrap.style.display='';
+      window._medItensState = { itens, idContrato, itensDetalhados:false, totalItens:0 };
+      // Se tem itens já lançados neste BM, mostrar automaticamente
+      if(folhas.some(i=>i._QTD_ATUAL_BM>0)) medToggleItens(true);
+    } else {
+      if(btnWrap) btnWrap.style.display='none';
+      if(semItens) semItens.style.display='';
+    }
+  }catch(e){ console.error('medVerificarItens', e); }
+}
+
+let _medItensAberto = false;
+function medToggleItens(forceOpen=false){
+  const wrap = document.getElementById('med-itens-wrap');
+  const txt  = document.getElementById('med-itens-toggle-txt');
+  const s    = window._medItensState;
+  if(!wrap||!s) return;
+  _medItensAberto = forceOpen || !_medItensAberto;
+  wrap.style.display = _medItensAberto ? '' : 'none';
+  if(txt) txt.textContent = _medItensAberto ? '🔼 Ocultar Itens' : '📋 Detalhar Itens';
+  s.itensDetalhados = _medItensAberto;
+  if(_medItensAberto) medRenderItens();
+}
+
+function medRenderItens(){
+  const tbody = document.getElementById('med-itens-tbody');
+  const s = window._medItensState;
+  if(!tbody||!s) return;
+  let total=0;
+  tbody.innerHTML = s.itens.map((item,idx)=>{
+    if(item._EH_PAI){
+      // Linha agrupadora — sem input
+      const pad = item._NIVEL*16;
+      return `<tr style="background:#EEF2FF">
+        <td style="padding:5px 6px;padding-left:${6+pad}px;font-family:monospace;font-size:11px;color:#666">${item.CODIGO_ITEM}</td>
+        <td colspan="7" style="padding:5px 6px;font-weight:700;font-size:12px;color:#3F51B5">${item.DESCRICAO}</td>
+      </tr>`;
+    }
+    const pad = item._NIVEL*16;
+    const qtd = parseFloat(item._QTD_INPUT ?? item._QTD_ATUAL_BM ?? '') || '';
+    const val = (parseFloat(qtd)||0) * parseFloat(item.PRECO_UNITARIO||0);
+    total += val;
+    return `<tr style="border-bottom:1px solid var(--g100);${item._SALDO<=0?'background:#FFF8E1':''}">
+      <td style="padding:5px 6px;padding-left:${6+pad}px;font-family:monospace;font-size:11px;color:#666">${item.CODIGO_ITEM}</td>
+      <td style="padding:5px 6px;font-size:12px">${item.DESCRICAO}</td>
+      <td style="padding:5px 6px;text-align:center;font-size:11px;color:#666">${item.UNIDADE||'—'}</td>
+      <td style="padding:5px 6px;text-align:right;font-size:11px;color:#666">${fmt.q(item.QUANTIDADE)}</td>
+      <td style="padding:5px 6px;text-align:right;font-size:11px;color:#666">${fmt.q(item._ACUM_ANTERIOR)}</td>
+      <td style="padding:5px 6px;text-align:right;font-size:11px;font-weight:700;color:${item._SALDO>0?'var(--g)':'#e65'}">${fmt.q(item._SALDO)}</td>
+      <td style="padding:4px 6px">
+        <input type="number" step="0.001" min="0" max="${item._SALDO+parseFloat(item._QTD_ATUAL_BM||0)}"
+          value="${qtd}"
+          placeholder="0"
+          style="width:90px;padding:4px 6px;border:1px solid ${item._SALDO<=0?'#FFB300':'var(--g300)'};border-radius:5px;font-size:12px;text-align:right"
+          oninput="medAtualizarItem(${idx},this.value)">
+      </td>
+      <td style="padding:5px 6px;text-align:right;font-weight:700;font-size:12px;color:${val>0?'var(--g)':'#ccc'}">${val>0?fmt.$(val):'—'}</td>
+    </tr>`;
+  }).join('');
+  s.totalItens = total;
+  const totalEl = document.getElementById('med-itens-total');
+  if(totalEl) totalEl.textContent = fmt.$(total);
+  // Atualizar campo bruto
+  const brutoInp = document.getElementById('med-bruto');
+  if(brutoInp && total > 0) brutoInp.value = total.toFixed(2);
+}
+
+function medAtualizarItem(idx, val){
+  const s = window._medItensState; if(!s) return;
+  s.itens[idx]._QTD_INPUT = val;
+  // Recalcular total sem re-render completo (só atualizar valor e total)
+  let total=0;
+  s.itens.forEach((item,i)=>{
+    if(item._EH_PAI) return;
+    const q = parseFloat(i===idx ? val : (item._QTD_INPUT ?? item._QTD_ATUAL_BM ?? 0))||0;
+    total += q * parseFloat(item.PRECO_UNITARIO||0);
+  });
+  s.totalItens = total;
+  const totalEl = document.getElementById('med-itens-total');
+  if(totalEl) totalEl.textContent = fmt.$(total);
+  const brutoInp = document.getElementById('med-bruto');
+  if(brutoInp && total > 0) brutoInp.value = total.toFixed(2);
+}
+
+// Helper para formatar quantidade
+if(!fmt.q) fmt.q = v => v==null||v===''||isNaN(v)?'—':parseFloat(v).toLocaleString('pt-BR',{maximumFractionDigits:3});
+
 function validMedDates(){ const pi=document.getElementById('med-pi')?.value; const pf=document.getElementById('med-pf')?.value; if(pi&&pf&&pf<pi) toast('Período fim não pode ser anterior ao início!','warn'); }
 
 // ─── Filtro de Centro de Custo ─────────────────────────────
