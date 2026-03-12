@@ -257,6 +257,7 @@ tr:hover td{background:var(--g50)}
       <div class="ni" onclick="nav('clientes')"><span class="ic">🏢</span>Clientes</div>
       <div class="ni" onclick="nav('pessoas')"><span class="ic">👤</span>Fiscais / Gerentes</div>
       <div class="ni" onclick="nav('seguimentos')"><span class="ic">⚙️</span>Seguimentos</div>
+      <div class="ni" onclick="nav('municipios')"><span class="ic">🏛️</span>Municípios Trib.</div>
       <div class="ni" onclick="nav('contratos')"><span class="ic">📄</span>Contratos</div>
       <div class="ni" onclick="nav('aditivos')"><span class="ic">➕</span>Aditivos</div>
     </div>
@@ -365,7 +366,7 @@ function sb(s){
 }
 
 const pages={};
-const titles={dashboard:'Dashboard',encontro:'Encontro de Contas',clientes:'Clientes',pessoas:'Fiscais / Gerentes',seguimentos:'Seguimentos',contratos:'Contratos',aditivos:'Aditivos',medicoes:'Medições',notas:'Notas Fiscais',recebimentos:'Recebimentos',adiantamentos:'Adiantamentos',retencoes:'Retenções',juros:'Juros e Multas',outros:'Outros Valores',documentos:'Documentos',usuarios:'Usuários',configuracoes:'Configurações'};
+const titles={dashboard:'Dashboard',encontro:'Encontro de Contas',clientes:'Clientes',pessoas:'Fiscais / Gerentes',seguimentos:'Seguimentos',municipios:'Municípios Tributários',contratos:'Contratos',aditivos:'Aditivos',medicoes:'Medições',notas:'Notas Fiscais',recebimentos:'Recebimentos',adiantamentos:'Adiantamentos',retencoes:'Retenções',juros:'Juros e Multas',outros:'Outros Valores',documentos:'Documentos',usuarios:'Usuários',configuracoes:'Configurações'};
 
 function nav(page){
   S.currentPage=page;
@@ -619,6 +620,147 @@ pages.encontro=async function(){
   }catch(e){ cnt.innerHTML=`<div class="al al-d">❌ ${e.message}</div>`; }
   finally{ load(false); }
 };
+
+// ============================================================
+// MUNICÍPIOS TRIBUTÁRIOS
+// ============================================================
+pages.municipios=async function(){
+  load(true); try{
+    const ufs = await api('getUFs',{});
+    document.getElementById('cnt').innerHTML=`
+    <div class="tbar" style="flex-wrap:wrap;gap:8px">
+      <select id="mun-uf-filter" style="padding:6px 10px;border:1px solid var(--g300);border-radius:6px;font-size:12px"
+        onchange="munFiltrar()">
+        <option value="">🗺️ Todos os Estados</option>
+        ${ufs.map(u=>`<option value="${u}">${u}</option>`).join('')}
+      </select>
+      <button class="btn bp" onclick="openMunicipioModal()">➕ Novo Município</button>
+    </div>
+    <div id="mun-body"></div>`;
+    await munFiltrar();
+  }catch(e){ document.getElementById('cnt').innerHTML=`<div class="al al-d">❌ ${e.message}</div>`; }
+  finally{ load(false); }
+};
+async function munFiltrar(){
+  const uf = document.getElementById('mun-uf-filter')?.value||'';
+  load(true); try{
+    const lista = await api('getMunicipiosTrib', uf?{uf}:{});
+    document.getElementById('mun-body').innerHTML = lista.length===0
+      ? `<div class="al al-i" style="margin-top:16px">Nenhum município cadastrado${uf?' para '+uf:''}.</div>`
+      : `<div class="card"><div class="tw"><table>
+      <thead><tr>
+        <th>UF</th><th>Cidade</th><th>Tipo Ativ.</th>
+        <th class="tr2">% Base ISS</th><th class="tr2">Alíq. ISS</th><th>ISS RF</th>
+        <th class="tr2">Alíq. INSS</th><th>INSS RF</th>
+        <th class="tr2">Alíq. IRPJ</th><th class="tr2">CSLL</th><th class="tr2">COFINS</th><th class="tr2">PIS</th>
+        <th></th>
+      </tr></thead>
+      <tbody>${lista.map(m=>`<tr>
+        <td class="mono">${m.UF}</td>
+        <td>${m.CIDADE}</td>
+        <td><span style="background:${m.TIPO_ATIVIDADE==='7.02'?'#E3F2FD':'#FFF3E0'};padding:2px 7px;border-radius:10px;font-size:11px;font-weight:700">${m.TIPO_ATIVIDADE||'7.02'}</span></td>
+        <td class="tr2">${fmt.pct2(_n(m.ISS_PCT_BASE)||100)}</td>
+        <td class="tr2">${fmt.pct2(_n(m.ISS_ALIQUOTA))}</td>
+        <td>${m.ISS_RETIDO_FONTE==='N'?'<span style="color:#e65">Não</span>':'<span style="color:#2a7">Sim</span>'}</td>
+        <td class="tr2">${m.TIPO_ATIVIDADE==='7.02'?fmt.pct2(_n(m.INSS_ALIQUOTA)):'—'}</td>
+        <td>${m.TIPO_ATIVIDADE==='7.02'?(m.INSS_RETIDO==='N'?'<span style="color:#e65">Não</span>':'<span style="color:#2a7">Sim</span>'):'—'}</td>
+        <td class="tr2">${m.TIPO_ATIVIDADE!=='7.02'?fmt.pct2(_n(m.IRPJ_ALIQUOTA)):'—'}</td>
+        <td class="tr2">${m.TIPO_ATIVIDADE!=='7.02'?fmt.pct2(_n(m.CSLL_ALIQUOTA)):'—'}</td>
+        <td class="tr2">${m.TIPO_ATIVIDADE!=='7.02'?fmt.pct2(_n(m.COFINS_ALIQUOTA)):'—'}</td>
+        <td class="tr2">${m.TIPO_ATIVIDADE!=='7.02'?fmt.pct2(_n(m.PIS_PASEP_ALIQUOTA)):'—'}</td>
+        <td>
+          <button class="bi" onclick='openMunicipioModal(${JSON.stringify(m)})'>✏️</button>
+          <button class="bi" onclick="delRow('MUNICIPIOS_TRIB','${m.ID_MUNICIPIO_TRIB}',pages.municipios)">🗑️</button>
+        </td>
+      </tr>`).join('')}</tbody>
+    </table></div></div>`;
+  }catch(e){ document.getElementById('mun-body').innerHTML=`<div class="al al-d">❌ ${e.message}</div>`; }
+  finally{ load(false); }
+}
+async function openMunicipioModal(d={}){
+  const ufs = await api('getUFs',{});
+  const tipo = d.TIPO_ATIVIDADE||'7.02';
+  modal(`${d.ID_MUNICIPIO_TRIB?'Editar':'Novo'} Município Tributário`,`
+    <form id="fmun" class="fg">
+      <div class="fsec">📍 Localização</div>
+      <div class="fgrp"><label>UF *</label>
+        <select name="UF" id="mun-uf" onchange="munLoadCidades(this.value)" required>
+          <option value="">— Selecione —</option>
+          ${ufs.map(u=>`<option value="${u}" ${d.UF===u?'selected':''}>${u}</option>`).join('')}
+        </select>
+      </div>
+      <div class="fgrp"><label>Cidade *</label>
+        <select name="CIDADE" id="mun-cidade" required>
+          ${d.CIDADE?`<option value="${d.CIDADE}" selected>${d.CIDADE}</option>`:'<option value="">Selecione a UF primeiro</option>'}
+        </select>
+      </div>
+      <div class="fgrp"><label>Tipo de Atividade *</label>
+        <select name="TIPO_ATIVIDADE" id="mun-tipo" onchange="munToggleTipo(this.value)" required>
+          <option value="7.02" ${tipo==='7.02'?'selected':''}>7.02 — Obras Civis (ISS + INSS)</option>
+          <option value="7.01" ${tipo==='7.01'?'selected':''}>7.01 — Serviços Gerais (ISS + IRPJ/CSLL/COFINS/PIS)</option>
+        </select>
+      </div>
+
+      <div class="fsec">🏦 ISS (todos os tipos)</div>
+      <div class="fgrp"><label>% Base de Cálculo ISS</label>
+        <input name="ISS_PCT_BASE" type="number" step="0.01" min="0" max="100" value="${_n(d.ISS_PCT_BASE)||100}" placeholder="100">
+        <small style="color:#999;font-size:11px">Padrão 100%. Reduza se houver dedução de materiais.</small>
+      </div>
+      <div class="fgrp"><label>Alíquota ISS (%)</label><input name="ISS_ALIQUOTA" type="number" step="0.01" value="${_n(d.ISS_ALIQUOTA)||5}"></div>
+      <div class="fgrp"><label>ISS Retido na Fonte</label>
+        <select name="ISS_RETIDO_FONTE">
+          <option value="S" ${d.ISS_RETIDO_FONTE!=='N'?'selected':''}>Sim — desconta do líquido</option>
+          <option value="N" ${d.ISS_RETIDO_FONTE==='N'?'selected':''}>Não — empresa recolhe</option>
+        </select>
+      </div>
+
+      <div id="mun-sec-702" style="display:${tipo==='7.02'?'contents':'none'}">
+        <div class="fsec">👷 INSS (somente 7.02)</div>
+        <div class="fgrp"><label>Alíquota INSS (%)</label><input name="INSS_ALIQUOTA" type="number" step="0.01" value="${_n(d.INSS_ALIQUOTA)||3.5}"></div>
+        <div class="fgrp"><label>INSS Retido na Fonte</label>
+          <select name="INSS_RETIDO">
+            <option value="S" ${d.INSS_RETIDO!=='N'?'selected':''}>Sim — desconta do líquido</option>
+            <option value="N" ${d.INSS_RETIDO==='N'?'selected':''}>Não — empresa recolhe</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="mun-sec-701" style="display:${tipo==='7.01'?'contents':'none'}">
+        <div class="fsec">📊 Outros Impostos (somente 7.01)</div>
+        ${[['IRPJ','IRPJ_ALIQUOTA','IRPJ_RETIDO',1.5],['CSLL','CSLL_ALIQUOTA','CSLL_RETIDO',1],['COFINS','COFINS_ALIQUOTA','COFINS_RETIDO',3],['PIS/PASEP','PIS_PASEP_ALIQUOTA','PIS_PASEP_RETIDO',0.65]].map(([nm,aliqF,retF,def])=>`
+          <div class="fgrp"><label>Alíquota ${nm} (%)</label><input name="${aliqF}" type="number" step="0.01" value="${_n(d[aliqF])||def}"></div>
+          <div class="fgrp"><label>${nm} Retido na Fonte</label>
+            <select name="${retF}">
+              <option value="S" ${d[retF]!=='N'?'selected':''}>Sim</option>
+              <option value="N" ${d[retF]==='N'?'selected':''}>Não</option>
+            </select>
+          </div>`).join('')}
+      </div>
+      ${d.ID_MUNICIPIO_TRIB?`<input type="hidden" name="ID_MUNICIPIO_TRIB" value="${d.ID_MUNICIPIO_TRIB}">`:''}`
+  ,async()=>{
+    const obj=fdata('fmun'); load(true);
+    try{ await api('saveMunicipioTrib',obj); closeModal(); toast('Salvo!'); pages.municipios(); }
+    catch(e){ toast(e.message,'err'); } finally{ load(false); }
+  });
+  if(d.UF) munLoadCidades(d.UF, d.CIDADE);
+}
+function munToggleTipo(tipo){
+  const s702=document.getElementById('mun-sec-702');
+  const s701=document.getElementById('mun-sec-701');
+  if(s702) s702.style.display = tipo==='7.02'?'contents':'none';
+  if(s701) s701.style.display = tipo==='7.01'?'contents':'none';
+}
+async function munLoadCidades(uf, selCidade=''){
+  const sel=document.getElementById('mun-cidade'); if(!sel||!uf) return;
+  sel.innerHTML='<option>Carregando...</option>';
+  try{
+    const cids = await api('getCidades',{uf});
+    sel.innerHTML=`<option value="">— Selecione —</option>`+cids.map(c=>`<option value="${c}" ${c===selCidade?'selected':''}>${c}</option>`).join('');
+  }catch(e){ sel.innerHTML='<option>Erro</option>'; }
+}
+
+// Funções auxiliares de formato decimal para %
+if(!fmt.pct2) fmt.pct2 = v => v==null||v===''?'—': parseFloat(v).toFixed(2).replace('.',',')+' %';
 
 pages.seguimentos=async function(){
   load(true); try{
@@ -1576,9 +1718,10 @@ pages.notas=async function(){
 };
 
 async function openNFModal(d={}){
-  const [csList, cfg2] = await Promise.all([
+  const [csList, cfg2, ufsLista] = await Promise.all([
     api('getContratosPorCC',{}),
-    S.config && Object.keys(S.config).length ? Promise.resolve(S.config) : api('getConfig',{})
+    S.config && Object.keys(S.config).length ? Promise.resolve(S.config) : api('getConfig',{}),
+    api('getUFs',{})
   ]);
   const cfg = cfg2; S.config=cfg;
 
@@ -1615,7 +1758,7 @@ async function openNFModal(d={}){
       <div class="fgrp"><label>Número NF *</label><input name="NUMERO_NF" value="${d.NUMERO_NF||''}" required></div>
       <div class="fgrp"><label>Data Emissão</label><input name="DATA_EMISSAO" type="date" value="${d.DATA_EMISSAO||''}"></div>
       <div class="fgrp"><label>Data Vencimento</label><input name="DATA_VENCIMENTO" type="date" value="${d.DATA_VENCIMENTO||''}"></div>
-      <div class="fgrp"><label>Valor Bruto (R$) *</label><input name="VALOR_BRUTO_NF" id="nf-bruto" type="number" step="0.01" value="${d.VALOR_BRUTO_NF||''}" required></div>
+      <div class="fgrp"><label>Valor Bruto (R$) *</label><input name="VALOR_BRUTO_NF" id="nf-bruto" type="number" step="0.01" value="${d.VALOR_BRUTO_NF||''}" required oninput="nfCalcImpostos()"></div>
 
       <div class="fsec">🔗 Tipo de Faturamento e Vínculos</div>
       <div class="fgrp full"><label>Tipo de Faturamento *</label>
@@ -1696,27 +1839,154 @@ async function openNFModal(d={}){
         </div>
       </div>
 
-      <div class="fsec">💼 Deduções Legais (impostos)</div>
-      <div style="grid-column:1/-1;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:6px 10px">
-        <div style="font-size:11px;font-weight:700;color:var(--g600)">Imposto</div>
-        <div style="font-size:11px;font-weight:700;color:var(--g600)">Retido?</div>
-        <div style="font-size:11px;font-weight:700;color:var(--g600)">Alíquota %</div>
-        <div style="font-size:11px;font-weight:700;color:var(--g600)">Valor R$ (auto)</div>
-        ${[['ISS','ISS_RETIDO_FONTE','ISS_ALIQUOTA','VALOR_ISS',cfg.ALIQUOTA_ISS_PADRAO||2],
-           ['INSS','INSS_RETIDO','INSS_ALIQUOTA','VALOR_INSS',cfg.ALIQUOTA_INSS||3.5],
-           ['IRPJ','IRPJ_RETIDO','IRPJ_ALIQUOTA','VALOR_IRPJ',cfg.ALIQUOTA_IRPJ||1.5],
-           ['CSLL','CSLL_RETIDO','CSLL_ALIQUOTA','VALOR_CSLL',cfg.ALIQUOTA_CSLL||1],
-           ['COFINS','COFINS_RETIDO','COFINS_ALIQUOTA','VALOR_COFINS',cfg.ALIQUOTA_COFINS||3],
-           ['PIS/PASEP','PIS_PASEP_RETIDO','PIS_PASEP_ALIQUOTA','VALOR_PIS_PASEP',cfg.ALIQUOTA_PIS||0.65],
-        ].map(([nm,ret,aliq,val,def])=>`
-          <div style="font-size:13px;padding:5px 0;border-bottom:1px solid var(--g100);display:flex;align-items:center">${nm}</div>
-          <select name="${ret}" style="padding:5px;border:1px solid var(--g300);border-radius:5px;font-size:12px">
-            <option value="S" ${d[ret]!=='N'?'selected':''}>Sim</option>
-            <option value="N" ${d[ret]==='N'?'selected':''}>Não</option>
-          </select>
-          <input name="${aliq}" type="number" step="0.01" value="${d[aliq]||def}" style="padding:5px;border:1px solid var(--g300);border-radius:5px;font-size:12px">
-          <input name="${val}" type="number" step="0.01" value="${d[val]||''}" placeholder="Auto" style="padding:5px;border:1px solid var(--g300);border-radius:5px;font-size:12px">
-        `).join('')}
+      <div class="fsec">🏛️ Município e Tipo de Atividade</div>
+      <div class="fgrp"><label>UF da Obra *</label>
+        <select id="nf-uf" onchange="nfLoadMunicipios(this.value)">
+          <option value="">— Selecione —</option>
+          ${ufsLista.map(u=>`<option value="${u}" ${d.UF_OBRA===u?'selected':''}>${u}</option>`).join('')}
+        </select>
+        <input type="hidden" name="UF_OBRA" id="nf-uf-val" value="${d.UF_OBRA||''}">
+      </div>
+      <div class="fgrp"><label>Município</label>
+        <select id="nf-mun" name="MUNICIPIO_OBRA" onchange="nfBuscarRegrasTrib(this.value)">
+          <option value="">— Selecione a UF primeiro —</option>
+          ${d.MUNICIPIO_OBRA?`<option value="${d.MUNICIPIO_OBRA}" selected>${d.MUNICIPIO_OBRA}</option>`:''}
+        </select>
+      </div>
+      <div class="fgrp"><label>Tipo de Atividade</label>
+        <select name="TIPO_ATIVIDADE" id="nf-tipo-atv" onchange="nfToggleTipoAtv(this.value)">
+          <option value="7.02" ${(d.TIPO_ATIVIDADE||'7.02')==='7.02'?'selected':''}>7.02 — Obras Civis (ISS + INSS)</option>
+          <option value="7.01" ${d.TIPO_ATIVIDADE==='7.01'?'selected':''}>7.01 — Serviços Gerais (ISS + IRPJ/CSLL/COFINS/PIS)</option>
+        </select>
+      </div>
+      <div class="fgrp full" style="grid-column:1/-1">
+        <div id="nf-trib-alerta" class="al al-i" style="display:none;font-size:12px;margin:0">
+          💡 Regras do município carregadas. Verifique e ajuste se necessário.
+        </div>
+      </div>
+
+      <div class="fsec">💼 Deduções Legais</div>
+
+      <!-- ISS — sempre visível -->
+      <div style="grid-column:1/-1;background:var(--g50);border-radius:8px;padding:12px;margin-bottom:4px">
+        <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:var(--g700)">🏦 ISS</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;align-items:end">
+          <div><label style="font-size:11px;color:#666;display:block;margin-bottom:3px">% Base de Cálculo</label>
+            <input name="ISS_PCT_BASE" id="nf-iss-pct" type="number" step="0.01" min="0" max="100"
+              value="${_n(d.ISS_PCT_BASE)||100}"
+              oninput="nfCalcImpostos()"
+              style="width:100%;padding:6px;border:1px solid var(--g300);border-radius:5px;font-size:13px">
+          </div>
+          <div><label style="font-size:11px;color:#666;display:block;margin-bottom:3px">Base de Cálculo (R$)</label>
+            <input id="nf-iss-base" type="text" readonly
+              style="width:100%;padding:6px;background:#f5f5f5;border:1px solid var(--g200);border-radius:5px;font-size:13px;color:#666">
+          </div>
+          <div><label style="font-size:11px;color:#666;display:block;margin-bottom:3px">Alíquota (%)</label>
+            <input name="ISS_ALIQUOTA" id="nf-iss-aliq" type="number" step="0.01"
+              value="${_n(d.ISS_ALIQUOTA)||5}"
+              oninput="nfCalcImpostos()"
+              style="width:100%;padding:6px;border:1px solid var(--g300);border-radius:5px;font-size:13px">
+          </div>
+          <div>
+            <label style="font-size:11px;color:#666;display:block;margin-bottom:3px">Valor ISS (R$)</label>
+            <input id="nf-iss-val" type="text" readonly
+              style="width:100%;padding:6px;background:#e8f5e9;border:1px solid var(--g200);border-radius:5px;font-size:13px;font-weight:700;color:#2a7">
+          </div>
+        </div>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:12px">
+          <label style="font-size:12px;display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="checkbox" id="nf-iss-rf" name="ISS_RETIDO_FONTE_CHK" ${d.ISS_RETIDO_FONTE!=='N'?'checked':''}
+              onchange="nfCalcImpostos()">
+            <span>Retido na Fonte — desconta do líquido</span>
+          </label>
+          <input type="hidden" name="ISS_RETIDO_FONTE" id="nf-iss-rf-val" value="${d.ISS_RETIDO_FONTE||'S'}">
+          <span id="nf-iss-info" style="font-size:12px;display:none;color:#e65">⚠️ Empresa recolhe: <strong id="nf-iss-info-val"></strong></span>
+        </div>
+      </div>
+
+      <!-- INSS — apenas 7.02 -->
+      <div id="nf-sec-inss" style="grid-column:1/-1;background:var(--g50);border-radius:8px;padding:12px;margin-bottom:4px;display:${(d.TIPO_ATIVIDADE||'7.02')==='7.02'?'block':'none'}">
+        <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:var(--g700)">👷 INSS <span style="font-weight:400;font-size:11px;color:#999">(apenas 7.02)</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:end">
+          <div><label style="font-size:11px;color:#666;display:block;margin-bottom:3px">Base (R$ Bruto)</label>
+            <input id="nf-inss-base" type="text" readonly
+              style="width:100%;padding:6px;background:#f5f5f5;border:1px solid var(--g200);border-radius:5px;font-size:13px;color:#666">
+          </div>
+          <div><label style="font-size:11px;color:#666;display:block;margin-bottom:3px">Alíquota (%)</label>
+            <input name="INSS_ALIQUOTA" id="nf-inss-aliq" type="number" step="0.01"
+              value="${_n(d.INSS_ALIQUOTA)||3.5}"
+              oninput="nfCalcImpostos()"
+              style="width:100%;padding:6px;border:1px solid var(--g300);border-radius:5px;font-size:13px">
+          </div>
+          <div><label style="font-size:11px;color:#666;display:block;margin-bottom:3px">Valor INSS (R$)</label>
+            <input id="nf-inss-val" type="text" readonly
+              style="width:100%;padding:6px;background:#e8f5e9;border:1px solid var(--g200);border-radius:5px;font-size:13px;font-weight:700;color:#2a7">
+          </div>
+        </div>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:12px">
+          <label style="font-size:12px;display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="checkbox" id="nf-inss-rf" name="INSS_RETIDO_CHK" ${d.INSS_RETIDO!=='N'?'checked':''}
+              onchange="nfCalcImpostos()">
+            <span>Retido na Fonte</span>
+          </label>
+          <input type="hidden" name="INSS_RETIDO" id="nf-inss-rf-val" value="${d.INSS_RETIDO||'S'}">
+          <span id="nf-inss-info" style="font-size:12px;display:none;color:#e65">⚠️ Empresa recolhe: <strong id="nf-inss-info-val"></strong></span>
+        </div>
+      </div>
+
+      <!-- IRPJ, CSLL, COFINS, PIS — apenas 7.01 -->
+      <div id="nf-sec-701" style="grid-column:1/-1;display:${d.TIPO_ATIVIDADE==='7.01'?'block':'none'}">
+        ${[
+          ['IRPJ','IRPJ_ALIQUOTA','IRPJ_RETIDO','nf-irpj',d.IRPJ_ALIQUOTA||1.5,d.IRPJ_RETIDO],
+          ['CSLL','CSLL_ALIQUOTA','CSLL_RETIDO','nf-csll',d.CSLL_ALIQUOTA||1,d.CSLL_RETIDO],
+          ['COFINS','COFINS_ALIQUOTA','COFINS_RETIDO','nf-cofins',d.COFINS_ALIQUOTA||3,d.COFINS_RETIDO],
+          ['PIS/PASEP','PIS_PASEP_ALIQUOTA','PIS_PASEP_RETIDO','nf-pis',d.PIS_PASEP_ALIQUOTA||0.65,d.PIS_PASEP_RETIDO],
+        ].map(([nm,aliqF,retF,id,defAliq,retVal])=>`
+          <div style="background:var(--g50);border-radius:8px;padding:10px;margin-bottom:4px">
+            <div style="font-weight:700;font-size:12px;margin-bottom:6px;color:var(--g700)">📊 ${nm}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:end">
+              <div><label style="font-size:11px;color:#666;display:block;margin-bottom:3px">Base (R$ Bruto)</label>
+                <input id="${id}-base" type="text" readonly style="width:100%;padding:5px;background:#f5f5f5;border:1px solid var(--g200);border-radius:5px;font-size:12px;color:#666">
+              </div>
+              <div><label style="font-size:11px;color:#666;display:block;margin-bottom:3px">Alíquota (%)</label>
+                <input name="${aliqF}" id="${id}-aliq" type="number" step="0.01" value="${defAliq}"
+                  oninput="nfCalcImpostos()" style="width:100%;padding:5px;border:1px solid var(--g300);border-radius:5px;font-size:12px">
+              </div>
+              <div><label style="font-size:11px;color:#666;display:block;margin-bottom:3px">Valor (R$)</label>
+                <input id="${id}-val" type="text" readonly style="width:100%;padding:5px;background:#e8f5e9;border:1px solid var(--g200);border-radius:5px;font-size:12px;font-weight:700;color:#2a7">
+              </div>
+            </div>
+            <div style="margin-top:6px;display:flex;align-items:center;gap:12px">
+              <label style="font-size:12px;display:flex;align-items:center;gap:6px;cursor:pointer">
+                <input type="checkbox" id="${id}-rf" ${retVal!=='N'?'checked':''} onchange="nfCalcImpostos()">
+                <span>Retido na Fonte</span>
+              </label>
+              <input type="hidden" name="${retF}" id="${id}-rf-val" value="${retVal||'S'}">
+              <span id="${id}-info" style="font-size:12px;display:none;color:#e65">⚠️ Empresa recolhe: <strong id="${id}-info-val"></strong></span>
+            </div>
+          </div>`).join('')}
+      </div>
+
+      <!-- Resumo tributário -->
+      <div style="grid-column:1/-1;background:#fff;border:2px solid var(--g200);border-radius:8px;padding:12px" id="nf-trib-resumo">
+        <div style="font-weight:700;font-size:13px;margin-bottom:8px">📋 Resumo Tributário</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+          <div style="background:var(--rl);border-radius:6px;padding:8px;text-align:center">
+            <div style="font-size:11px;color:#c62">Retidos na Fonte</div>
+            <div id="nf-total-retidos" style="font-weight:700;font-size:15px;color:#c00">R$ 0,00</div>
+            <div style="font-size:10px;color:#999">descontado do líquido</div>
+          </div>
+          <div style="background:#FFF8E1;border-radius:6px;padding:8px;text-align:center">
+            <div style="font-size:11px;color:#875">A Recolher (empresa)</div>
+            <div id="nf-total-proprios" style="font-weight:700;font-size:15px;color:#875">R$ 0,00</div>
+            <div style="font-size:10px;color:#999">não desconta do líquido</div>
+          </div>
+          <div style="background:var(--gl);border-radius:6px;padding:8px;text-align:center">
+            <div style="font-size:11px;color:var(--g)">Líquido NF</div>
+            <div id="nf-liquido-preview" style="font-weight:700;font-size:15px;color:var(--g)">R$ 0,00</div>
+            <div style="font-size:10px;color:#999">bruto − retidos</div>
+          </div>
+        </div>
       </div>
       <div class="fsec">🔒 Retenção Pós-Faturamento</div>
       <div class="fgrp"><label>Valor Retido (R$)</label><input name="RETENCAO_POS_FATURAMENTO" type="number" step="0.01" value="${d.RETENCAO_POS_FATURAMENTO||0}"></div>
@@ -1761,6 +2031,8 @@ async function openNFModal(d={}){
       pages.notas();
     }catch(e){ toast(e.message,'err'); } finally{ load(false); }
   },'molg');
+  // Inicializar cálculo se editando NF existente
+  setTimeout(()=>{ if(document.getElementById('nf-bruto')?.value) nfCalcImpostos(); }, 200);
 }
 
 // Helpers do modal de NF
@@ -1860,6 +2132,129 @@ async function nfLoadMeds(id){
   }catch(e){ sel.innerHTML='<option>Erro</option>'; }
 }
 function nfFillFromBM(sel){ const v=sel.selectedOptions[0]?.dataset?.val; const inp=document.getElementById('nf-bruto'); if(v&&inp&&!inp.value) inp.value=parseFloat(v).toFixed(2); }
+
+
+// ============================================================
+// HELPERS TRIBUTÁRIOS — modal NF
+// ============================================================
+function nfToggleTipoAtv(tipo){
+  const sec702 = document.getElementById('nf-sec-inss');
+  const sec701 = document.getElementById('nf-sec-701');
+  if(sec702) sec702.style.display = tipo==='7.02' ? 'block' : 'none';
+  if(sec701) sec701.style.display = tipo==='7.01' ? 'block' : 'none';
+  nfCalcImpostos();
+}
+
+function nfCalcImpostos(){
+  const bruto = fmt.n(document.getElementById('nf-bruto')?.value || 0);
+  if(!bruto) return;
+  const tipo = document.getElementById('nf-tipo-atv')?.value || '7.02';
+  const br = v => 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  // ISS
+  const pctBase = Math.min(100, Math.max(0, parseFloat(document.getElementById('nf-iss-pct')?.value||100)||100));
+  const baseISS = bruto * (pctBase/100);
+  const aliqISS = parseFloat(document.getElementById('nf-iss-aliq')?.value||0)||0;
+  const valISS  = baseISS * (aliqISS/100);
+  const issRF   = document.getElementById('nf-iss-rf')?.checked;
+  _setEl('nf-iss-base', br(baseISS));
+  _setEl('nf-iss-val',  br(valISS));
+  _setEl('nf-iss-rf-val', issRF?'S':'N');
+  const issInfoEl = document.getElementById('nf-iss-info');
+  if(issInfoEl){ issInfoEl.style.display = issRF?'none':'inline'; _setEl('nf-iss-info-val', br(valISS)); }
+
+  let totalRetidos = issRF ? valISS : 0;
+  let totalProprios = issRF ? 0 : valISS;
+
+  // INSS — 7.02
+  if(tipo==='7.02'){
+    const aliqINSS = parseFloat(document.getElementById('nf-inss-aliq')?.value||0)||0;
+    const valINSS  = bruto * (aliqINSS/100);
+    const inssRF   = document.getElementById('nf-inss-rf')?.checked;
+    _setEl('nf-inss-base', br(bruto));
+    _setEl('nf-inss-val',  br(valINSS));
+    _setEl('nf-inss-rf-val', inssRF?'S':'N');
+    const inssInfoEl = document.getElementById('nf-inss-info');
+    if(inssInfoEl){ inssInfoEl.style.display = inssRF?'none':'inline'; _setEl('nf-inss-info-val', br(valINSS)); }
+    totalRetidos  += inssRF ? valINSS : 0;
+    totalProprios += inssRF ? 0 : valINSS;
+  }
+
+  // 7.01 — IRPJ, CSLL, COFINS, PIS
+  if(tipo==='7.01'){
+    [['nf-irpj','IRPJ'],['nf-csll','CSLL'],['nf-cofins','COFINS'],['nf-pis','PIS']].forEach(([id])=>{
+      const aliq = parseFloat(document.getElementById(id+'-aliq')?.value||0)||0;
+      const val  = bruto * (aliq/100);
+      const rf   = document.getElementById(id+'-rf')?.checked;
+      _setEl(id+'-base', br(bruto));
+      _setEl(id+'-val',  br(val));
+      _setEl(id+'-rf-val', rf?'S':'N');
+      const infoEl = document.getElementById(id+'-info');
+      if(infoEl){ infoEl.style.display = rf?'none':'inline'; _setEl(id+'-info-val', br(val)); }
+      totalRetidos  += rf ? val : 0;
+      totalProprios += rf ? 0 : val;
+    });
+  }
+
+  const liquido = bruto - totalRetidos;
+  _setEl('nf-total-retidos',  br(totalRetidos));
+  _setEl('nf-total-proprios', br(totalProprios));
+  _setEl('nf-liquido-preview', br(liquido));
+}
+
+function _setEl(id, val){ const el=document.getElementById(id); if(el) el.value !== undefined && el.tagName!=='SPAN'&&el.tagName!=='DIV' ? el.value=val : el.textContent=val; }
+
+async function nfLoadMunicipios(uf){
+  const sel = document.getElementById('nf-mun');
+  const hiddenUF = document.getElementById('nf-uf-val');
+  if(hiddenUF) hiddenUF.value = uf;
+  if(!sel||!uf) return;
+  sel.innerHTML='<option>Carregando...</option>';
+  try{
+    const cids = await api('getCidades',{uf});
+    sel.innerHTML=`<option value="">— Selecione o município —</option>`
+      + cids.map(c=>`<option value="${c}">${c}</option>`).join('');
+  }catch(e){ sel.innerHTML='<option>Erro</option>'; }
+}
+
+async function nfBuscarRegrasTrib(cidade){
+  const uf = document.getElementById('nf-uf-val')?.value || document.getElementById('nf-uf')?.value;
+  if(!cidade||!uf) return;
+  try{
+    const regra = await api('getMunicipioTribPorCidade',{uf, cidade});
+    if(!regra){ 
+      document.getElementById('nf-trib-alerta').style.display='none';
+      return; 
+    }
+    // Preencher tipo de atividade
+    const tipoEl = document.getElementById('nf-tipo-atv');
+    if(tipoEl && regra.TIPO_ATIVIDADE){ tipoEl.value = regra.TIPO_ATIVIDADE; nfToggleTipoAtv(regra.TIPO_ATIVIDADE); }
+    // ISS
+    const issAliq = document.getElementById('nf-iss-aliq');
+    const issPct  = document.getElementById('nf-iss-pct');
+    const issRF   = document.getElementById('nf-iss-rf');
+    if(issAliq && regra.ISS_ALIQUOTA) issAliq.value = regra.ISS_ALIQUOTA;
+    if(issPct  && regra.ISS_PCT_BASE) issPct.value  = regra.ISS_PCT_BASE;
+    if(issRF) issRF.checked = regra.ISS_RETIDO_FONTE !== 'N';
+    // INSS
+    const inssAliq = document.getElementById('nf-inss-aliq');
+    const inssRF   = document.getElementById('nf-inss-rf');
+    if(inssAliq && regra.INSS_ALIQUOTA) inssAliq.value = regra.INSS_ALIQUOTA;
+    if(inssRF) inssRF.checked = regra.INSS_RETIDO !== 'N';
+    // 7.01
+    [['nf-irpj','IRPJ_ALIQUOTA','IRPJ_RETIDO'],['nf-csll','CSLL_ALIQUOTA','CSLL_RETIDO'],
+     ['nf-cofins','COFINS_ALIQUOTA','COFINS_RETIDO'],['nf-pis','PIS_PASEP_ALIQUOTA','PIS_PASEP_RETIDO']].forEach(([id,aliqF,retF])=>{
+      const aliqEl = document.getElementById(id+'-aliq');
+      const rfEl   = document.getElementById(id+'-rf');
+      if(aliqEl && regra[aliqF]) aliqEl.value = regra[aliqF];
+      if(rfEl) rfEl.checked = regra[retF] !== 'N';
+    });
+    nfCalcImpostos();
+    const alerta = document.getElementById('nf-trib-alerta');
+    if(alerta){ alerta.style.display=''; alerta.textContent=`💡 Regras de ${cidade}/${uf} carregadas. Verifique e ajuste se necessário.`; }
+  }catch(e){ console.error('nfBuscarRegrasTrib', e); }
+}
+
 
 // ============================================================
 // RECEBIMENTOS
