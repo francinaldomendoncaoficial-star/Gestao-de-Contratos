@@ -1160,20 +1160,25 @@ async function _evSalvar(){
 
   load(true);
   try{
+    let resultado;
     if(ctx.modo==='nf'){
-      await api('saveEventosLoteNF',{
+      resultado = await api('saveEventosLoteNF',{
         idNF: ctx.idRef, idContrato: ctx.idContrato,
         centroCusto: ctx.centroCusto, grupos: gruposPayload,
       });
     } else {
-      await api('saveEventosLote',{
+      resultado = await api('saveEventosLote',{
         idMedicao: ctx.idRef, idContrato: ctx.idContrato,
         centroCusto: ctx.centroCusto, grupos: gruposPayload,
       });
     }
+    // Validar que o backend realmente gravou
+    const idEsperado = ctx.modo==='nf' ? resultado?.idNF : resultado?.idMedicao;
+    if(!resultado || (!idEsperado && gruposPayload.length > 0)){
+      throw new Error('Resposta inesperada do servidor. Verifique se a URL do Web App (deploy) está atualizada nas Configurações.');
+    }
     closeModal();
     toast('Eventos salvos com sucesso!');
-    // Recarregar a lista de onde veio
     if(ctx.refreshFn) ctx.refreshFn();
   }catch(e){ toast(e.message,'err'); } finally{ load(false); }
 }
