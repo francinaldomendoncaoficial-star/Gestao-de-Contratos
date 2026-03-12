@@ -1093,11 +1093,6 @@ function _evRender(adiantamentos){
     html += `</div>`;
   });
 
-  html += `<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--g200)">
-    <button class="btn bo" onclick="closeModal()">Cancelar</button>
-    <button class="btn bp" onclick="_evSalvar()">💾 Salvar Eventos</button>
-  </div>`;
-
   return html;
 }
 
@@ -1158,6 +1153,9 @@ async function _evSalvar(){
     items: (_evState[g.tipo]||[]).filter(i=>fmt.n(i.valor)>0)
   })).filter(g=>g.items.length>0);
 
+  console.log('_evCtx:', JSON.stringify(ctx));
+  console.log('_evState:', JSON.stringify(_evState));
+  console.log('gruposPayload:', JSON.stringify(gruposPayload));
   load(true);
   try{
     let resultado;
@@ -1207,7 +1205,11 @@ async function openEventosMedModal(idMedicao, labelBM, idContrato, centroCusto, 
             <h3>⚡ Eventos Financeiros — ${labelBM}</h3>
             <button class="bi" onclick="closeModal()">✕</button>
           </div>
-          <div class="mob" id="ev-body" style="max-height:calc(90vh - 70px)"></div>
+          <div class="mob" id="ev-body" style="max-height:calc(90vh - 160px)"></div>
+          <div class="mof">
+            <button class="btn bo" onclick="closeModal()">Cancelar</button>
+            <button class="btn bp" onclick="_evSalvar()">💾 Salvar Eventos</button>
+          </div>
         </div>
       </div>`;
     document.body.style.overflow='hidden';
@@ -1239,7 +1241,11 @@ async function openEventosNFModal(idNF, labelNF, idContrato, centroCusto, bruto,
             <h3>⚡ Eventos Financeiros — ${labelNF}</h3>
             <button class="bi" onclick="closeModal()">✕</button>
           </div>
-          <div class="mob" id="ev-body" style="max-height:calc(90vh - 70px)"></div>
+          <div class="mob" id="ev-body" style="max-height:calc(90vh - 160px)"></div>
+          <div class="mof">
+            <button class="btn bo" onclick="closeModal()">Cancelar</button>
+            <button class="btn bp" onclick="_evSalvar()">💾 Salvar Eventos</button>
+          </div>
         </div>
       </div>`;
     document.body.style.overflow='hidden';
