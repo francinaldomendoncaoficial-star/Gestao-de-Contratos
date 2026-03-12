@@ -1084,7 +1084,8 @@ function _evRender(adiantamentos){
           <option value="">Adiantamento...</option>
           ${adisAtivos.map(a=>`<option value="${a.ID_ADIANTAMENTO}" ${item.idAdiantamento===a.ID_ADIANTAMENTO?'selected':''}>${a.DESCRICAO||a.TIPO} (−${fmt.$(a.VALOR_A_AMORTIZAR)})</option>`).join('')}
         </select>`:''}
-        <input type="number" step="0.01" min="0" placeholder="Valor R$" value="${item.valor||''}" oninput="_evUpdate('${g.tipo}',${idx},'valor',this.dataset.valor||this.value)"
+        <input type="number" step="0.01" min="0" placeholder="Valor R$" value="${item.valor||''}"
+          data-ev-tipo="${g.tipo}" data-ev-idx="${idx}"
           style="padding:6px 8px;border:1px solid var(--g300);border-radius:5px;font-size:13px;text-align:right;width:100%">
         <button onclick="_evRemItem('${g.tipo}',${idx})" style="background:#ffebee;border:1px solid #ffcdd2;color:#b71c1c;border-radius:5px;padding:6px;cursor:pointer;font-size:14px">✕</button>
       </div>`;
@@ -2397,12 +2398,20 @@ init();
 // MÁSCARA DE MOEDA (R$) — aplicada em todos os input[step="0.01"]
 // ============================================================
 function mascaraMoeda(input) {
-  // Guarda posição para não travar cursor
   let raw = input.value.replace(/\D/g, '');
-  if (!raw) { input.value = ''; input.dataset.valor = ''; return; }
-  let num = parseInt(raw, 10) / 100;
-  input.dataset.valor = num.toFixed(2); // valor numérico real
-  input.value = num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  if (!raw) { input.value = ''; input.dataset.valor = ''; }
+  else {
+    let num = parseInt(raw, 10) / 100;
+    input.dataset.valor = num.toFixed(2);
+    input.value = num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+  // Atualizar _evState se for input de evento
+  if (input.dataset.evTipo !== undefined && input.dataset.evIdx !== undefined) {
+    const tipo = input.dataset.evTipo;
+    const idx  = parseInt(input.dataset.evIdx);
+    const val  = input.dataset.valor ? parseFloat(input.dataset.valor) : '';
+    _evUpdate(tipo, idx, 'valor', val);
+  }
 }
 
 function aplicarMascarasMoeda(root) {
