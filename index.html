@@ -105,6 +105,147 @@ tr:hover td{background:var(--g50)}
 </style>
 </head>
 <body>
+
+<!-- ═══════════════════════════════════════════════
+     TELA DE AUTENTICAÇÃO
+═══════════════════════════════════════════════ -->
+<div id="auth-screen" style="display:none;position:fixed;inset:0;background:linear-gradient(135deg,#0D47A1 0%,#1565C0 50%,#1976D2 100%);z-index:10000;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:16px;padding:36px;width:420px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    
+    <!-- Logo -->
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="font-size:36px;margin-bottom:6px">🏗️</div>
+      <h1 style="font-size:18px;font-weight:700;color:#1565C0">Gestão de Contratos</h1>
+      <p style="font-size:12px;color:#999;margin-top:4px">Sistema Financeiro</p>
+    </div>
+
+    <!-- PAINEL LOGIN -->
+    <div id="painel-login">
+      <h3 style="font-size:14px;font-weight:600;color:#333;margin-bottom:16px">Entrar</h3>
+      <div style="margin-bottom:12px">
+        <label style="font-size:12px;color:#666;display:block;margin-bottom:4px">Login</label>
+        <input id="auth-login" type="text" placeholder="Seu login" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;outline:none" onkeydown="if(event.key==='Enter')fazerLogin()">
+      </div>
+      <div style="margin-bottom:20px">
+        <label style="font-size:12px;color:#666;display:block;margin-bottom:4px">Senha</label>
+        <input id="auth-senha" type="password" placeholder="Sua senha" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;outline:none" onkeydown="if(event.key==='Enter')fazerLogin()">
+      </div>
+      <button onclick="fazerLogin()" style="width:100%;padding:12px;background:#1565C0;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Entrar</button>
+      <div style="display:flex;justify-content:space-between;margin-top:14px">
+        <span style="font-size:12px;color:#1565C0;cursor:pointer" onclick="mostrarPainel('cadastro')">Criar conta</span>
+        <span style="font-size:12px;color:#1565C0;cursor:pointer" onclick="mostrarPainel('recuperar')">Esqueci a senha</span>
+      </div>
+    </div>
+
+    <!-- PAINEL CADASTRO -->
+    <div id="painel-cadastro" style="display:none">
+      <h3 style="font-size:14px;font-weight:600;color:#333;margin-bottom:16px">Criar conta</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div>
+          <label style="font-size:12px;color:#666;display:block;margin-bottom:4px">Nome completo *</label>
+          <input id="cad-nome" type="text" placeholder="Seu nome" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:13px">
+        </div>
+        <div>
+          <label style="font-size:12px;color:#666;display:block;margin-bottom:4px">Login *</label>
+          <input id="cad-login" type="text" placeholder="login único" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:13px">
+        </div>
+        <div>
+          <label style="font-size:12px;color:#666;display:block;margin-bottom:4px">E-mail *</label>
+          <input id="cad-email" type="email" placeholder="email@exemplo.com" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:13px">
+        </div>
+        <div>
+          <label style="font-size:12px;color:#666;display:block;margin-bottom:4px">Telefone</label>
+          <input id="cad-tel" type="text" placeholder="(00) 00000-0000" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:13px">
+        </div>
+        <div>
+          <label style="font-size:12px;color:#666;display:block;margin-bottom:4px">Senha *</label>
+          <input id="cad-senha" type="password" placeholder="mín. 6 caracteres" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:13px">
+        </div>
+        <div>
+          <label style="font-size:12px;color:#666;display:block;margin-bottom:4px">Confirmar senha *</label>
+          <input id="cad-senha2" type="password" placeholder="repita a senha" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:8px;font-size:13px">
+        </div>
+      </div>
+      <button onclick="fazerCadastro()" style="width:100%;padding:12px;background:#2E7D32;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-top:4px">Cadastrar</button>
+      <div style="text-align:center;margin-top:12px">
+        <span style="font-size:12px;color:#1565C0;cursor:pointer" onclick="mostrarPainel('login')">← Voltar ao login</span>
+      </div>
+    </div>
+
+    <!-- PAINEL VALIDAR E-MAIL -->
+    <div id="painel-validar" style="display:none">
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:32px">📧</div>
+        <h3 style="font-size:14px;font-weight:600;color:#333;margin-top:8px">Validar e-mail</h3>
+        <p id="validar-msg" style="font-size:12px;color:#666;margin-top:6px">Digite o código enviado para seu e-mail.</p>
+      </div>
+      <div style="margin-bottom:16px">
+        <input id="validar-codigo" type="text" placeholder="000000" maxlength="6"
+          style="width:100%;padding:14px;border:2px solid #1565C0;border-radius:8px;font-size:24px;text-align:center;letter-spacing:8px;font-weight:700" onkeydown="if(event.key==='Enter')validarEmail()">
+      </div>
+      <button onclick="validarEmail()" style="width:100%;padding:12px;background:#1565C0;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Validar</button>
+      <div style="display:flex;justify-content:space-between;margin-top:12px">
+        <span style="font-size:12px;color:#1565C0;cursor:pointer" onclick="reenviarCodigoValidacao()">Reenviar código</span>
+        <span style="font-size:12px;color:#1565C0;cursor:pointer" onclick="mostrarPainel('login')">← Voltar</span>
+      </div>
+    </div>
+
+    <!-- PAINEL AGUARDANDO APROVAÇÃO -->
+    <div id="painel-aguardando" style="display:none">
+      <div style="text-align:center;padding:20px 0">
+        <div style="font-size:48px;margin-bottom:12px">⏳</div>
+        <h3 style="font-size:16px;font-weight:600;color:#333">Aguardando aprovação</h3>
+        <p style="font-size:13px;color:#666;margin-top:10px;line-height:1.6">
+          Seu e-mail foi validado com sucesso!<br>
+          Seu cadastro está aguardando aprovação do administrador.<br><br>
+          <strong>Entre em contato:</strong><br>
+          <span id="contato-admin" style="color:#1565C0">administrador do sistema</span>
+        </p>
+        <button onclick="mostrarPainel('login')" style="margin-top:20px;padding:10px 24px;background:#1565C0;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px">← Voltar ao login</button>
+      </div>
+    </div>
+
+    <!-- PAINEL RECUPERAR SENHA -->
+    <div id="painel-recuperar" style="display:none">
+      <h3 style="font-size:14px;font-weight:600;color:#333;margin-bottom:6px">Recuperar senha</h3>
+      <p style="font-size:12px;color:#666;margin-bottom:16px">Informe seu login e enviaremos um código para seu e-mail cadastrado.</p>
+      <div style="margin-bottom:14px">
+        <label style="font-size:12px;color:#666;display:block;margin-bottom:4px">Login</label>
+        <input id="rec-login" type="text" placeholder="Seu login" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px">
+      </div>
+      <button onclick="solicitarRecuperacao()" style="width:100%;padding:12px;background:#E65100;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Enviar código</button>
+      <div style="text-align:center;margin-top:12px">
+        <span style="font-size:12px;color:#1565C0;cursor:pointer" onclick="mostrarPainel('login')">← Voltar ao login</span>
+      </div>
+    </div>
+
+    <!-- PAINEL REDEFINIR SENHA -->
+    <div id="painel-redefinir" style="display:none">
+      <h3 style="font-size:14px;font-weight:600;color:#333;margin-bottom:6px">Nova senha</h3>
+      <p style="font-size:12px;color:#666;margin-bottom:16px">Digite o código recebido e sua nova senha.</p>
+      <div style="margin-bottom:10px">
+        <label style="font-size:12px;color:#666;display:block;margin-bottom:4px">Código</label>
+        <input id="redef-codigo" type="text" placeholder="000000" maxlength="6" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:18px;text-align:center;letter-spacing:6px;font-weight:700">
+      </div>
+      <div style="margin-bottom:10px">
+        <label style="font-size:12px;color:#666;display:block;margin-bottom:4px">Nova senha</label>
+        <input id="redef-senha" type="password" placeholder="mín. 6 caracteres" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px">
+      </div>
+      <div style="margin-bottom:16px">
+        <label style="font-size:12px;color:#666;display:block;margin-bottom:4px">Confirmar nova senha</label>
+        <input id="redef-senha2" type="password" placeholder="repita a senha" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px">
+      </div>
+      <button onclick="redefinirSenha()" style="width:100%;padding:12px;background:#E65100;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Redefinir senha</button>
+      <div style="text-align:center;margin-top:12px">
+        <span style="font-size:12px;color:#1565C0;cursor:pointer" onclick="mostrarPainel('login')">← Voltar ao login</span>
+      </div>
+    </div>
+
+    <!-- Mensagem de erro/info da auth -->
+    <div id="auth-msg" style="margin-top:14px;padding:10px;border-radius:8px;font-size:13px;display:none;text-align:center"></div>
+  </div>
+</div>
+
 <div id="sb">
   <div class="logo"><h1>🏗️ Contratos</h1><p id="emp-label">Conectrom</p></div>
   <nav>
@@ -133,7 +274,19 @@ tr:hover td{background:var(--g50)}
     <div class="ng"><div class="ngt">Gestão</div>
       <div class="ni" onclick="nav('documentos')"><span class="ic">📁</span>Documentos</div>
     </div>
+    <div class="ng" id="menu-admin" style="display:none"><div class="ngt">Administração</div>
+      <div class="ni" onclick="nav('usuarios')"><span class="ic">👥</span>Usuários</div>
+      <div class="ni" onclick="nav('configuracoes')"><span class="ic">⚙️</span>Configurações</div>
+    </div>
+    <div class="ng" id="menu-config-user" style="display:none"><div class="ngt">Conta</div>
+      <div class="ni" onclick="nav('configuracoes')"><span class="ic">⚙️</span>Configurações</div>
+    </div>
   </nav>
+  <div style="padding:10px 12px;border-top:1px solid #333;font-size:11px;color:#777">
+    <div id="sb-user-nome" style="color:#ccc;font-weight:600;margin-bottom:2px"></div>
+    <div id="sb-user-perfil" style="text-transform:uppercase;letter-spacing:.5px;font-size:10px;color:#555"></div>
+    <div style="margin-top:8px;cursor:pointer;color:#90CAF9;font-size:12px" onclick="fazerLogout()">🚪 Sair</div>
+  </div>
 </div>
 
 <div id="main">
@@ -167,7 +320,7 @@ tr:hover td{background:var(--g50)}
 // ============================================================
 // STATE & UTILS
 // ============================================================
-const S = { config:{}, clientes:[], contratos:[], pessoas:[], seguimentos:[], tiposEvento:[], ufs:[] };
+const S = { config:{}, clientes:[], contratos:[], pessoas:[], seguimentos:[], tiposEvento:[], ufs:[], sessao: null };
 const fmt = {
   $: v=>'R$ '+(parseFloat(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),
   $s: v=>{ const n=parseFloat(v)||0; if(n>=1e6) return 'R$ '+(n/1e6).toFixed(2)+'M'; if(n>=1e3) return 'R$ '+(n/1e3).toFixed(0)+'K'; return fmt.$(v); },
@@ -187,16 +340,24 @@ function toast(msg,type='ok'){
 function getApiUrl(){
   return localStorage.getItem('API_URL') || 'https://script.google.com/macros/s/AKfycbyaNznOrE21UyU45BKRKkc4IcMfSATXNPTeNAeIRWijLCaIht9thKZwEetxN1zbXd57Hw/exec';
 }
-function api(action,payload={}){
+function api(action, payload={}, publico=false){
   const url = getApiUrl();
-  if(!url) return Promise.reject(new Error('URL da API não configurada. Clique em ⚙️ Configurar API.'));
+  const token = S.sessao?.token || '';
   return fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({ action, payload })
+    body: JSON.stringify({ action, payload, token })
   })
   .then(r => r.json())
-  .then(r => { if(r.ok) return r.data; throw new Error(r.error); });
+  .then(r => {
+    if(r.ok) return r.data;
+    // Sessão expirada
+    if(r.error === 'Sessão inválida ou expirada. Faça login novamente.' && !publico) {
+      _encerrarSessao();
+      throw new Error('Sessão expirada. Faça login novamente.');
+    }
+    throw new Error(r.error);
+  });
 }
 function sb(s){
   if(!s) return '—';
@@ -204,7 +365,7 @@ function sb(s){
 }
 
 const pages={};
-const titles={dashboard:'Dashboard',encontro:'Encontro de Contas',clientes:'Clientes',pessoas:'Fiscais / Gerentes',seguimentos:'Seguimentos',contratos:'Contratos',aditivos:'Aditivos',medicoes:'Medições',notas:'Notas Fiscais',recebimentos:'Recebimentos',adiantamentos:'Adiantamentos',retencoes:'Retenções',juros:'Juros e Multas',outros:'Outros Valores',documentos:'Documentos'};
+const titles={dashboard:'Dashboard',encontro:'Encontro de Contas',clientes:'Clientes',pessoas:'Fiscais / Gerentes',seguimentos:'Seguimentos',contratos:'Contratos',aditivos:'Aditivos',medicoes:'Medições',notas:'Notas Fiscais',recebimentos:'Recebimentos',adiantamentos:'Adiantamentos',retencoes:'Retenções',juros:'Juros e Multas',outros:'Outros Valores',documentos:'Documentos',usuarios:'Usuários',configuracoes:'Configurações'};
 
 function nav(page){
   S.currentPage=page;
@@ -1648,6 +1809,302 @@ async function delRow(aba,id,afterFn){
   finally{ load(false); }
 }
 
+
+
+// ============================================================
+// PÁGINA: USUÁRIOS (admin)
+// ============================================================
+pages.usuarios = async function(){
+  if(S.sessao?.perfil !== 'admin'){ toast('Acesso restrito.','err'); return; }
+  load(true); try{
+    const us = await api('getUsuarios',{});
+    const statusBadge = s => ({
+      APROVADO: '<span style="background:#E8F5E9;color:#2E7D32;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">✅ Aprovado</span>',
+      PENDENTE: '<span style="background:#FFF3E0;color:#E65100;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">⏳ Pendente</span>',
+      BLOQUEADO: '<span style="background:#FFEBEE;color:#B71C1C;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">🚫 Bloqueado</span>',
+    }[s] || s);
+    const perfilBadge = p => p==='admin'
+      ? '<span style="background:#EDE7F6;color:#6A1B9A;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">👑 Admin</span>'
+      : '<span style="background:#E3F2FD;color:#1565C0;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">👤 User</span>';
+    document.getElementById('cnt').innerHTML=`
+    <div class="card">
+      <div class="ct">👥 Usuários cadastrados</div>
+      <div class="tw"><table>
+        <thead><tr><th>Nome</th><th>Login</th><th>E-mail</th><th>Telefone</th><th>Perfil</th><th>Status</th><th>E-mail Valid.</th><th>Último acesso</th><th>Ações</th></tr></thead>
+        <tbody>${us.map(u=>`<tr>
+          <td>${u.nome}</td>
+          <td><code>${u.login}</code></td>
+          <td>${u.email}</td>
+          <td>${u.telefone||'—'}</td>
+          <td>${perfilBadge(u.perfil)}
+            <select onchange="alterarPerfil('${u.id}',this.value)" style="margin-left:6px;font-size:11px;padding:2px;border:1px solid #ddd;border-radius:4px">
+              <option value="user" ${u.perfil==='user'?'selected':''}>user</option>
+              <option value="admin" ${u.perfil==='admin'?'selected':''}>admin</option>
+            </select>
+          </td>
+          <td>${statusBadge(u.status)}</td>
+          <td style="text-align:center">${u.emailValidado==='S'?'✅':'❌'}</td>
+          <td>${u.dataUltimoAcesso ? new Date(u.dataUltimoAcesso).toLocaleString('pt-BR') : '—'}</td>
+          <td style="white-space:nowrap">
+            ${u.status!=='APROVADO'?`<button class="bi" style="background:#E8F5E9;color:#2E7D32" onclick="aprovarUser('${u.id}')">✅ Aprovar</button>`:''}
+            ${u.status!=='BLOQUEADO'?`<button class="bi" style="background:#FFEBEE;color:#B71C1C" onclick="rejeitarUser('${u.id}')">🚫 Bloquear</button>`:''}
+          </td>
+        </tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:#999;padding:16px">Nenhum usuário</td></tr>'}
+        </tbody>
+      </table></div>
+    </div>`;
+  }catch(e){ document.getElementById('cnt').innerHTML=`<div class="al al-d">❌ ${e.message}</div>`; }
+  finally{ load(false); }
+};
+
+async function aprovarUser(id){
+  if(!confirm('Aprovar este usuário?')) return;
+  load(true);
+  try{ await api('aprovarUsuario',{id}); toast('Usuário aprovado!'); pages.usuarios(); }
+  catch(e){ toast(e.message,'err'); }
+  finally{ load(false); }
+}
+async function rejeitarUser(id){
+  if(!confirm('Bloquear este usuário?')) return;
+  load(true);
+  try{ await api('rejeitarUsuario',{id}); toast('Usuário bloqueado.'); pages.usuarios(); }
+  catch(e){ toast(e.message,'err'); }
+  finally{ load(false); }
+}
+async function alterarPerfil(id, perfil){
+  load(true);
+  try{ await api('alterarPerfilUsuario',{id,perfil}); toast('Perfil atualizado!'); }
+  catch(e){ toast(e.message,'err'); }
+  finally{ load(false); }
+}
+
+// ============================================================
+// PÁGINA: CONFIGURAÇÕES
+// ============================================================
+pages.configuracoes = function(){
+  document.getElementById('cnt').innerHTML=`
+  <div class="card" style="max-width:480px">
+    <div class="ct">⚙️ Configurações da conta</div>
+    <h4 style="font-size:13px;color:#555;margin-bottom:14px">Alterar senha</h4>
+    <div style="margin-bottom:10px">
+      <label style="font-size:12px;color:#666;display:block;margin-bottom:4px">Senha atual</label>
+      <input id="cfg-senha-atual" type="password" placeholder="••••••••" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:6px;font-size:13px">
+    </div>
+    <div style="margin-bottom:10px">
+      <label style="font-size:12px;color:#666;display:block;margin-bottom:4px">Nova senha</label>
+      <input id="cfg-nova-senha" type="password" placeholder="mín. 6 caracteres" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:6px;font-size:13px">
+    </div>
+    <div style="margin-bottom:16px">
+      <label style="font-size:12px;color:#666;display:block;margin-bottom:4px">Confirmar nova senha</label>
+      <input id="cfg-nova-senha2" type="password" placeholder="repita a senha" style="width:100%;padding:9px;border:1px solid #ddd;border-radius:6px;font-size:13px">
+    </div>
+    <button onclick="salvarNovaSenha()" style="padding:10px 24px;background:#1565C0;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Salvar nova senha</button>
+    <div id="cfg-msg" style="margin-top:12px;font-size:13px;display:none"></div>
+  </div>`;
+};
+
+async function salvarNovaSenha(){
+  const senhaAtual = document.getElementById('cfg-senha-atual').value;
+  const novaSenha = document.getElementById('cfg-nova-senha').value;
+  const novaSenha2 = document.getElementById('cfg-nova-senha2').value;
+  const msg = document.getElementById('cfg-msg');
+  if(!senhaAtual || !novaSenha) { msg.style.display='block'; msg.style.color='#B71C1C'; msg.textContent='Preencha todos os campos.'; return; }
+  if(novaSenha !== novaSenha2) { msg.style.display='block'; msg.style.color='#B71C1C'; msg.textContent='As senhas não coincidem.'; return; }
+  load(true);
+  try{
+    const data = await api('alterarSenha', { senhaAtual, novaSenha });
+    msg.style.display='block'; msg.style.color='#2E7D32'; msg.textContent='✅ ' + data.mensagem;
+    document.getElementById('cfg-senha-atual').value='';
+    document.getElementById('cfg-nova-senha').value='';
+    document.getElementById('cfg-nova-senha2').value='';
+  } catch(e){ msg.style.display='block'; msg.style.color='#B71C1C'; msg.textContent='❌ '+e.message; }
+  finally{ load(false); }
+}
+
+
+// ============================================================
+// AUTENTICAÇÃO
+// ============================================================
+
+let _authLoginAtual = '';
+
+function mostrarPainel(id) {
+  ['login','cadastro','validar','aguardando','recuperar','redefinir'].forEach(p => {
+    const el = document.getElementById('painel-'+p);
+    if(el) el.style.display = p===id ? 'block' : 'none';
+  });
+  const msg = document.getElementById('auth-msg');
+  msg.style.display = 'none';
+}
+
+function authMsg(txt, tipo='err') {
+  const el = document.getElementById('auth-msg');
+  el.textContent = txt;
+  el.style.display = 'block';
+  el.style.background = tipo==='ok' ? '#E8F5E9' : tipo==='warn' ? '#FFF3E0' : '#FFEBEE';
+  el.style.color = tipo==='ok' ? '#2E7D32' : tipo==='warn' ? '#E65100' : '#B71C1C';
+}
+
+function mostrarAuthScreen() {
+  const el = document.getElementById('auth-screen');
+  el.style.display = 'flex';
+  mostrarPainel('login');
+}
+
+function esconderAuthScreen() {
+  document.getElementById('auth-screen').style.display = 'none';
+}
+
+async function fazerLogin() {
+  const login = document.getElementById('auth-login').value.trim();
+  const senha = document.getElementById('auth-senha').value;
+  if(!login || !senha) { authMsg('Preencha login e senha.'); return; }
+  load(true);
+  try {
+    const data = await api('login', { login, senha }, true);
+    S.sessao = data;
+    localStorage.setItem('sessao', JSON.stringify(data));
+    _aplicarSessao(data);
+    esconderAuthScreen();
+    init();
+  } catch(e) {
+    if(e.message === 'E-MAIL_NAO_VALIDADO') {
+      _authLoginAtual = login;
+      document.getElementById('validar-msg').textContent = 'Digite o código enviado para seu e-mail cadastrado.';
+      mostrarPainel('validar');
+    } else if(e.message === 'AGUARDANDO_APROVACAO') {
+      mostrarPainel('aguardando');
+    } else {
+      authMsg(e.message);
+    }
+  } finally { load(false); }
+}
+
+function _aplicarSessao(sessao) {
+  S.sessao = sessao;
+  document.getElementById('sb-user-nome').textContent = sessao.nome;
+  document.getElementById('sb-user-perfil').textContent = sessao.perfil === 'admin' ? '👑 Admin' : '👤 Usuário';
+  // Mostra menu admin ou conta
+  document.getElementById('menu-admin').style.display = sessao.perfil === 'admin' ? 'block' : 'none';
+  document.getElementById('menu-config-user').style.display = sessao.perfil === 'user' ? 'block' : 'none';
+  // Perfil user: desabilita botões de edição
+  if(sessao.perfil === 'user') _modoSomenteLeitura();
+}
+
+function _modoSomenteLeitura() {
+  // Será aplicado via CSS — adicionamos classe no body
+  document.body.classList.add('modo-leitura');
+}
+
+function _encerrarSessao() {
+  S.sessao = null;
+  localStorage.removeItem('sessao');
+  document.body.classList.remove('modo-leitura');
+  mostrarAuthScreen();
+}
+
+async function fazerLogout() {
+  if(S.sessao?.token) {
+    try { await api('logout', {}, true); } catch(e) {}
+  }
+  _encerrarSessao();
+}
+
+async function fazerCadastro() {
+  const nome = document.getElementById('cad-nome').value.trim();
+  const login = document.getElementById('cad-login').value.trim();
+  const email = document.getElementById('cad-email').value.trim();
+  const tel = document.getElementById('cad-tel').value.trim();
+  const senha = document.getElementById('cad-senha').value;
+  const senha2 = document.getElementById('cad-senha2').value;
+  if(!nome || !login || !email || !senha) { authMsg('Preencha todos os campos obrigatórios.'); return; }
+  if(senha !== senha2) { authMsg('As senhas não coincidem.'); return; }
+  if(senha.length < 6) { authMsg('A senha deve ter pelo menos 6 caracteres.'); return; }
+  load(true);
+  try {
+    const data = await api('cadastrarUsuario', { nome, login, senha, email, telefone: tel }, true);
+    _authLoginAtual = login;
+    authMsg(data.mensagem, 'ok');
+    setTimeout(() => {
+      mostrarPainel('validar');
+      document.getElementById('validar-msg').textContent = `Código enviado para ${email}. Válido por 30 minutos.`;
+    }, 1500);
+  } catch(e) { authMsg(e.message); }
+  finally { load(false); }
+}
+
+async function validarEmail() {
+  const codigo = document.getElementById('validar-codigo').value.trim();
+  if(!codigo) { authMsg('Digite o código.'); return; }
+  load(true);
+  try {
+    const data = await api('validarEmail', { login: _authLoginAtual, codigo }, true);
+    authMsg(data.mensagem, 'ok');
+    setTimeout(() => mostrarPainel('aguardando'), 1500);
+  } catch(e) { authMsg(e.message); }
+  finally { load(false); }
+}
+
+async function reenviarCodigoValidacao() {
+  load(true);
+  try {
+    const data = await api('reenviarCodigo', { login: _authLoginAtual }, true);
+    authMsg(data.mensagem, 'ok');
+  } catch(e) { authMsg(e.message); }
+  finally { load(false); }
+}
+
+async function solicitarRecuperacao() {
+  const login = document.getElementById('rec-login').value.trim();
+  if(!login) { authMsg('Informe seu login.'); return; }
+  _authLoginAtual = login;
+  load(true);
+  try {
+    const data = await api('solicitarRecuperacaoSenha', { login }, true);
+    authMsg(data.mensagem, 'ok');
+    setTimeout(() => mostrarPainel('redefinir'), 1500);
+  } catch(e) { authMsg(e.message); }
+  finally { load(false); }
+}
+
+async function redefinirSenha() {
+  const codigo = document.getElementById('redef-codigo').value.trim();
+  const novaSenha = document.getElementById('redef-senha').value;
+  const novaSenha2 = document.getElementById('redef-senha2').value;
+  if(!codigo || !novaSenha) { authMsg('Preencha o código e a nova senha.'); return; }
+  if(novaSenha !== novaSenha2) { authMsg('As senhas não coincidem.'); return; }
+  load(true);
+  try {
+    const data = await api('redefinirSenha', { login: _authLoginAtual, codigo, novaSenha }, true);
+    authMsg(data.mensagem, 'ok');
+    setTimeout(() => mostrarPainel('login'), 1500);
+  } catch(e) { authMsg(e.message); }
+  finally { load(false); }
+}
+
+// ============================================================
+// MODO SOMENTE LEITURA (perfil user)
+// ============================================================
+// Injeta CSS para desabilitar botões de salvar/excluir para perfil user
+const _cssLeitura = `
+.modo-leitura button[onclick*="save"],
+.modo-leitura button[onclick*="Save"],
+.modo-leitura button[onclick*="del"],
+.modo-leitura button[onclick*="Del"],
+.modo-leitura button[onclick*="excluir"],
+.modo-leitura .btn-save,
+.modo-leitura .btn-del,
+.modo-leitura input[type=submit] {
+  opacity: 0.35 !important;
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+}
+`;
+const _styleEl = document.createElement('style');
+_styleEl.textContent = _cssLeitura;
+document.head.appendChild(_styleEl);
+
+
 // ============================================================
 // CONFIG DA API
 // ============================================================
@@ -1668,15 +2125,37 @@ function salvarConfigApi(){
 // INIT
 // ============================================================
 async function init(){
-  if(!getApiUrl()){
-    // Sem URL configurada: abre o modal automaticamente
-    setTimeout(abrirConfigApi, 400);
-    nav('dashboard');
+  // Verifica sessão salva no localStorage
+  const sessaoSalva = localStorage.getItem('sessao');
+  if(sessaoSalva) {
+    try {
+      const s = JSON.parse(sessaoSalva);
+      // Valida token no servidor
+      const valido = await api('verificarSessao', { token: s.token }, true).catch(()=>null);
+      if(valido) {
+        S.sessao = { ...s, ...valido };
+        localStorage.setItem('sessao', JSON.stringify(S.sessao));
+        _aplicarSessao(S.sessao);
+        esconderAuthScreen();
+      } else {
+        _encerrarSessao();
+        return;
+      }
+    } catch(e) {
+      _encerrarSessao();
+      return;
+    }
+  } else {
+    mostrarAuthScreen();
     return;
   }
+
   load(true);
-  try{ S.config=await api('getConfig',{}); document.getElementById('emp-label').textContent=S.config.EMPRESA_CONTRATADA_1||'Conectrom'; }
-  catch(e){ console.warn('Config:',e.message); toast('Erro ao conectar com a API. Verifique a URL em ⚙️ API','err'); }
+  try{
+    S.config = await api('getConfig',{});
+    document.getElementById('emp-label').textContent = S.config.EMPRESA_CONTRATADA_1||'Gestão Contratos';
+  }
+  catch(e){ console.warn('Config:',e.message); }
   finally{ load(false); }
   nav('dashboard');
 }
