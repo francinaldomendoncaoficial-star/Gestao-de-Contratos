@@ -1827,6 +1827,7 @@ pages.usuarios = async function(){
       ? '<span style="background:#EDE7F6;color:#6A1B9A;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">👑 Admin</span>'
       : '<span style="background:#E3F2FD;color:#1565C0;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600">👤 User</span>';
     document.getElementById('cnt').innerHTML=`
+    <div class="tbar"><div class="tr"><button class="btn bp" onclick="abrirModalNovoUsuario()">➕ Novo Usuário</button></div></div>
     <div class="card">
       <div class="ct">👥 Usuários cadastrados</div>
       <div class="tw"><table>
@@ -1856,6 +1857,59 @@ pages.usuarios = async function(){
   }catch(e){ document.getElementById('cnt').innerHTML=`<div class="al al-d">❌ ${e.message}</div>`; }
   finally{ load(false); }
 };
+
+function abrirModalNovoUsuario(){
+  const m = document.createElement('div');
+  m.id = 'modal-novo-usuario';
+  m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center';
+  m.innerHTML = `
+    <div style="background:#fff;border-radius:12px;padding:28px;width:460px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+      <h3 style="font-size:15px;font-weight:600;margin-bottom:18px">➕ Novo Usuário</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div><label style="font-size:12px;color:#666;display:block;margin-bottom:3px">Nome *</label>
+          <input id="nu-nome" type="text" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px"></div>
+        <div><label style="font-size:12px;color:#666;display:block;margin-bottom:3px">Login *</label>
+          <input id="nu-login" type="text" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px"></div>
+        <div><label style="font-size:12px;color:#666;display:block;margin-bottom:3px">E-mail *</label>
+          <input id="nu-email" type="email" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px"></div>
+        <div><label style="font-size:12px;color:#666;display:block;margin-bottom:3px">Telefone</label>
+          <input id="nu-tel" type="text" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px"></div>
+        <div><label style="font-size:12px;color:#666;display:block;margin-bottom:3px">Senha *</label>
+          <input id="nu-senha" type="password" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px"></div>
+        <div><label style="font-size:12px;color:#666;display:block;margin-bottom:3px">Perfil</label>
+          <select id="nu-perfil" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:13px">
+            <option value="user">👤 User</option>
+            <option value="admin">👑 Admin</option>
+          </select></div>
+      </div>
+      <p style="font-size:11px;color:#999;margin-bottom:14px">O usuário receberá as credenciais por e-mail e já terá acesso aprovado.</p>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button onclick="document.getElementById('modal-novo-usuario').remove()" style="padding:8px 18px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:13px">Cancelar</button>
+        <button onclick="salvarNovoUsuarioAdmin()" style="padding:8px 18px;border:none;border-radius:6px;background:#1565C0;color:#fff;cursor:pointer;font-weight:600;font-size:13px">Criar usuário</button>
+      </div>
+      <div id="nu-msg" style="margin-top:10px;font-size:12px;display:none"></div>
+    </div>`;
+  document.body.appendChild(m);
+}
+
+async function salvarNovoUsuarioAdmin(){
+  const nome  = document.getElementById('nu-nome').value.trim();
+  const login = document.getElementById('nu-login').value.trim();
+  const email = document.getElementById('nu-email').value.trim();
+  const tel   = document.getElementById('nu-tel').value.trim();
+  const senha = document.getElementById('nu-senha').value;
+  const perfil= document.getElementById('nu-perfil').value;
+  const msg   = document.getElementById('nu-msg');
+  if(!nome||!login||!email||!senha){ msg.style.display='block';msg.style.color='#B71C1C';msg.textContent='Preencha os campos obrigatórios.'; return; }
+  load(true);
+  try{
+    const data = await api('cadastrarUsuarioAdmin',{nome,login,senha,email,telefone:tel,perfil});
+    toast(data.mensagem);
+    document.getElementById('modal-novo-usuario').remove();
+    pages.usuarios();
+  } catch(e){ msg.style.display='block';msg.style.color='#B71C1C';msg.textContent=e.message; }
+  finally{ load(false); }
+}
 
 async function aprovarUser(id){
   if(!confirm('Aprovar este usuário?')) return;
