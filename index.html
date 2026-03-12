@@ -443,11 +443,11 @@ pages.dashboard=async function(){
         document.getElementById('dash-body').innerHTML=`
         <div class="kpig">
           <div class="kpi b"><div class="kl">Contratos Ativos</div><div class="kv">${r.ativos}</div><div class="ks">de ${r.totalContratos} total</div></div>
-          <div class="kpi g"><div class="kl">Total Contratado</div><div class="kv">${fmt.$s(r.totCtrt)}</div><div class="ks">${fmt.pct(r.totMed,r.totCtrt)} medido</div></div>
-          <div class="kpi g"><div class="kl">Total Recebido</div><div class="kv">${fmt.$s(r.totRec)}</div><div class="ks">de ${fmt.$s(r.totFat)} faturado</div></div>
-          <div class="kpi o"><div class="kl">A Receber</div><div class="kv">${fmt.$s(r.totARec)}</div></div>
-          <div class="kpi r"><div class="kl">A Devolver</div><div class="kv td">−${fmt.$s(r.totADev)}</div></div>
-          <div class="kpi pu"><div class="kl">Saldo Líquido</div><div class="kv ${r.saldoLiquido>=0?'ts':'td'}">${fmt.$s(r.saldoLiquido)}</div></div>
+          <div class="kpi g"><div class="kl">Total Contratado</div><div class="kv">${fmt.$(r.totCtrt)}</div><div class="ks">${fmt.pct(r.totMed,r.totCtrt)} medido</div></div>
+          <div class="kpi g"><div class="kl">Total Recebido</div><div class="kv">${fmt.$(r.totRec)}</div><div class="ks">de ${fmt.$(r.totFat)} faturado</div></div>
+          <div class="kpi o"><div class="kl">A Receber</div><div class="kv">${fmt.$(r.totARec)}</div></div>
+          <div class="kpi r"><div class="kl">A Devolver</div><div class="kv td">−${fmt.$(r.totADev)}</div></div>
+          <div class="kpi pu"><div class="kl">Saldo Líquido</div><div class="kv ${r.saldoLiquido>=0?'ts':'td'}">${fmt.$(r.saldoLiquido)}</div></div>
           <div class="kpi ${r.nfsVencidas>0?'r':'b'}"><div class="kl">NFs Vencidas</div><div class="kv">${r.nfsVencidas}</div></div>
           <div class="kpi o"><div class="kl">Vcto em 30d</div><div class="kv">${r.nfsVencendo}</div></div>
         </div>
@@ -456,7 +456,7 @@ pages.dashboard=async function(){
             ${(d.porSegmento||[]).map(s=>`<div style="margin-bottom:10px">
               <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px">
                 <span>${s.segmento} <span style="color:#999;font-size:11px">(${s.count})</span></span>
-                <span class="fb">${fmt.$s(s.totalContratado)}</span>
+                <span class="fb">${fmt.$(s.totalContratado)}</span>
               </div>
               <div class="pw"><div class="pb" style="width:${Math.min(100,s.totalContratado/maxSeg*100).toFixed(1)}%"></div></div>
             </div>`).join('')||'<p style="color:#999">Sem dados</p>'}
@@ -464,7 +464,7 @@ pages.dashboard=async function(){
           <div class="card"><div class="ct">🏢 A Receber por Cliente</div>
             ${(d.porCliente||[]).slice(0,8).map(c=>`
               <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f5f5f5;font-size:13px">
-                <span>${c.cliente}</span><span class="fb ${c.aReceber>0?'ts':''}">${fmt.$s(c.aReceber)}</span>
+                <span>${c.cliente}</span><span class="fb ${c.aReceber>0?'ts':''}">${fmt.$(c.aReceber)}</span>
               </div>`).join('')||'<p style="color:#999">Sem dados</p>'}
           </div>
         </div>`;
@@ -497,22 +497,109 @@ pages.encontro=async function(){
         <div class="ec3">
           <div class="ecb rec"><div class="el" style="color:var(--g)">A Receber</div><div class="ev ts">${fmt.$(r.totalAReceber)}</div></div>
           <div class="ecb rec" style="background:var(--rl)"><div class="el" style="color:var(--r)">A Devolver</div><div class="ev td">−${fmt.$(r.totalADevolver)}</div></div>
-          <div class="ecb rec" style="background:${r.saldo>=0?'var(--gl)':'var(--rl)'}"><div class="el">Saldo Líquido</div><div class="ev ${r.saldo>=0?'ts':'td'}">${fmt.$(r.saldo)}</div></div>
+          <div class="ecb rec" style="background:${r.saldoLiquido>=0?'var(--gl)':'var(--rl)'}"><div class="el">Saldo Líquido</div><div class="ev ${r.saldoLiquido>=0?'ts':'td'}">${fmt.$(r.saldoLiquido)}</div></div>
         </div>
-        ${d.porContrato?.length?`
-        <div class="card"><div class="ct">Por Contrato</div><div class="tw"><table>
-          <thead><tr><th>Obra</th><th>CC</th><th>Faturado</th><th>Recebido</th><th>A Receber</th><th>Retenção</th><th>Adiantamento</th><th>Saldo</th></tr></thead>
-          <tbody>${d.porContrato.map(c=>`<tr>
-            <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.nomeObra}</td>
-            <td style="font-size:11px;color:#666;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.cc}</td>
-            <td class="tr2">${fmt.$s(c.totalFaturado)}</td>
-            <td class="tr2 ts">${fmt.$s(c.totalRecebido)}</td>
-            <td class="tr2 ${c.aReceber>0?'ts':''}">${fmt.$s(c.aReceber)}</td>
-            <td class="tr2">${fmt.$s(c.retencaoAberta)}</td>
-            <td class="tr2">${fmt.$s(c.adiantamentoAberto)}</td>
-            <td class="tr2 fb ${c.saldo>=0?'ts':'td'}">${fmt.$s(c.saldo)}</td>
-          </tr>`).join('')}</tbody>
-        </table></div></div>`:''}`;
+
+        <!-- Composição A Receber -->
+        <div class="card" style="margin-top:14px">
+          <div class="ct" style="font-size:14px;font-weight:700;margin-bottom:10px">📥 Composição — A Receber</div>
+          <table style="width:100%;border-collapse:collapse">
+            <tbody>
+              ${[
+                ['(+) NFs Faturadas a Receber', r.faturadoAReceber],
+                ['(+) BMs Medidos a Faturar',   r.medidoAFaturar],
+                ['(+) Retenções a Receber',      r.retencoesAReceber],
+                ['(+) Juros e Multas',           r.jurosAReceber],
+                ['(+) Aditivos Pleiteados',      r.aditivosPleiteados],
+                ['(+) Outros a Receber',         r.outrosAReceber],
+              ].map(([label,val])=>`<tr style="border-bottom:1px solid var(--g100)">
+                <td style="padding:7px 4px;font-size:13px">${label}</td>
+                <td style="padding:7px 4px;text-align:right;font-weight:600;color:${val>0?'var(--g)':'var(--g500)'}">
+                  ${val>0 ? fmt.$(val) : '—'}
+                </td>
+              </tr>`).join('')}
+              <tr style="background:var(--gl);font-weight:700">
+                <td style="padding:8px 4px;font-size:14px">TOTAL A RECEBER</td>
+                <td style="padding:8px 4px;text-align:right;font-size:15px;color:var(--g)">${fmt.$(r.totalAReceber)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Composição A Devolver -->
+        <div class="card" style="margin-top:10px">
+          <div class="ct" style="font-size:14px;font-weight:700;margin-bottom:10px">📤 Composição — A Devolver</div>
+          <table style="width:100%;border-collapse:collapse">
+            <tbody>
+              ${[
+                ['(−) Adiantamentos em Aberto', r.adiantamentosEmAberto],
+                ['(−) Outros a Devolver',       r.outrosADevolver],
+              ].map(([label,val])=>`<tr style="border-bottom:1px solid var(--g100)">
+                <td style="padding:7px 4px;font-size:13px">${label}</td>
+                <td style="padding:7px 4px;text-align:right;font-weight:600;color:${val>0?'var(--r)':'var(--g500)'}">
+                  ${val>0 ? '−'+fmt.$(val) : '—'}
+                </td>
+              </tr>`).join('')}
+              <tr style="background:var(--rl);font-weight:700">
+                <td style="padding:8px 4px;font-size:14px">TOTAL A DEVOLVER</td>
+                <td style="padding:8px 4px;text-align:right;font-size:15px;color:var(--r)">−${fmt.$(r.totalADevolver)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Detalhes BMs a faturar -->
+        ${d.detalheMedicoes?.length?`<div class="card" style="margin-top:10px">
+          <div class="ct">📋 BMs Medidos a Faturar</div><div class="tw"><table>
+            <thead><tr><th>Obra</th><th>BM</th><th>Emissão</th><th class="tr2">Bruto</th><th class="tr2">Retenções</th><th class="tr2">Descontos</th><th class="tr2">Líquido</th></tr></thead>
+            <tbody>${d.detalheMedicoes.map(m=>`<tr>
+              <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.obra}</td>
+              <td>BM ${m.bm}</td><td>${fmt.d(m.emissao)}</td>
+              <td class="tr2">${fmt.$(m.bruto)}</td>
+              <td class="tr2 td">${fmt.$(m.retencoes)}</td>
+              <td class="tr2 td">${fmt.$(m.descontos)}</td>
+              <td class="tr2 fb ts">${fmt.$(m.liquidoAFaturar)}</td>
+            </tr>`).join('')}</tbody>
+          </table></div></div>`:''}
+
+        <!-- Detalhes NFs a receber -->
+        ${d.detalheFaturamentos?.length?`<div class="card" style="margin-top:10px">
+          <div class="ct">🧾 NFs Faturadas a Receber</div><div class="tw"><table>
+            <thead><tr><th>Obra</th><th>NF</th><th>Emissão</th><th>Vencimento</th><th>Atraso</th><th class="tr2">Líquido</th><th>Status</th></tr></thead>
+            <tbody>${d.detalheFaturamentos.map(n=>`<tr>
+              <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${n.obra}</td>
+              <td class="mono">${n.nf}</td><td>${fmt.d(n.emissao)}</td><td>${fmt.d(n.vencimento)}</td>
+              <td>${n.diasAtraso>0?`<span class="td">${n.diasAtraso}d</span>`:'—'}</td>
+              <td class="tr2 fb ts">${fmt.$(n.liquidoAReceber)}</td>
+              <td>${sb(n.status)}</td>
+            </tr>`).join('')}</tbody>
+          </table></div></div>`:''}
+
+        <!-- Retenções -->
+        ${d.detalheRetencoes?.length?`<div class="card" style="margin-top:10px">
+          <div class="ct">🔒 Retenções a Receber</div><div class="tw"><table>
+            <thead><tr><th>Obra</th><th>Referência</th><th>Tipo</th><th class="tr2">Retido</th><th class="tr2">Devolvido</th><th class="tr2">A Devolver</th></tr></thead>
+            <tbody>${d.detalheRetencoes.map(r=>`<tr>
+              <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.obra}</td>
+              <td>${r.ref||'—'}</td><td>${r.subtipo}</td>
+              <td class="tr2">${fmt.$(r.retido)}</td>
+              <td class="tr2 ts">${fmt.$(r.devolvido)}</td>
+              <td class="tr2 fb ts">${fmt.$(r.aDevolver)}</td>
+            </tr>`).join('')}</tbody>
+          </table></div></div>`:''}
+
+        <!-- Adiantamentos em aberto -->
+        ${d.detalheAdiantamentos?.length?`<div class="card" style="margin-top:10px">
+          <div class="ct">💰 Adiantamentos em Aberto</div><div class="tw"><table>
+            <thead><tr><th>Obra</th><th>Tipo</th><th class="tr2">Recebido</th><th class="tr2">Amortizado</th><th class="tr2">Falta Amort.</th></tr></thead>
+            <tbody>${d.detalheAdiantamentos.map(a=>`<tr>
+              <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.obra}</td>
+              <td>${a.tipo}</td>
+              <td class="tr2">${fmt.$(a.recebido)}</td>
+              <td class="tr2 ts">${fmt.$(a.amortizado)}</td>
+              <td class="tr2 fb td">${fmt.$(a.faltaAmort)}</td>
+            </tr>`).join('')}</tbody>
+          </table></div></div>`:''}`;
       }catch(e){ document.getElementById('enc-body').innerHTML=`<div class="al al-d">❌ ${e.message}</div>`; }
       finally{ load(false); }
     };
@@ -697,9 +784,9 @@ function renderCtrs(data){
       <div style="font-size:11px;color:#999;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.CENTRO_CUSTO||''}</div></td>
     <td>${c.NOME_CLIENTE||'—'}</td><td>${c.CONTRATADA||'—'}</td><td>${c.SEGMENTO||'—'}</td>
     <td>${sb(c.STATUS)}</td>
-    <td class="tr2">${fmt.$s(c.TOTAL_CONTRATADO)}</td>
-    <td class="tr2">${fmt.$s(c._TOTAL_MEDIDO)}</td>
-    <td class="tr2 fb ${fmt.n(c._FATURADO_A_RECEBER)>0?'ts':''}">${fmt.$s(c._FATURADO_A_RECEBER)}</td>
+    <td class="tr2">${fmt.$(c.TOTAL_CONTRATADO)}</td>
+    <td class="tr2">${fmt.$(c._TOTAL_MEDIDO)}</td>
+    <td class="tr2 fb ${fmt.n(c._FATURADO_A_RECEBER)>0?'ts':''}">${fmt.$(c._FATURADO_A_RECEBER)}</td>
     <td style="white-space:nowrap">
       <button class="bi" onclick="openCtrDetalhe('${c.ID_CONTRATO}')" title="Ver">👁️</button>
       <button class="bi" onclick='openCtrModal(${JSON.stringify(c)})' title="Editar">✏️</button>
