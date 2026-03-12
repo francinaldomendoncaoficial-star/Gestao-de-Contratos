@@ -1,0 +1,1680 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gestão Financeira</title>
+<style>
+:root{--p:#1565C0;--pd:#0D47A1;--pl:#E3F2FD;--g:#2E7D32;--gl:#E8F5E9;--w:#E65100;--wl:#FFF3E0;--r:#B71C1C;--rl:#FFEBEE;--pu:#6A1B9A;--pul:#F3E5F5;--t:#00796B;--tl:#E0F2F1;--g50:#FAFAFA;--g100:#F5F5F5;--g200:#EEE;--g300:#E0E0E0;--g400:#BDBDBD;--g500:#9E9E9E;--g600:#757575;--g700:#616161;--g800:#424242;--g900:#212121;--sw:222px;--hh:54px;--rad:8px;--sh:0 2px 8px rgba(0,0,0,.1);--ff:'Segoe UI',system-ui,sans-serif}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--ff);background:var(--g100);color:var(--g900);font-size:14px;display:flex;height:100vh;overflow:hidden}
+#sb{width:var(--sw);background:#1a1a2e;color:#fff;display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;z-index:100}
+#sb .logo{padding:14px 12px;border-bottom:1px solid #333}
+#sb .logo h1{font-size:13px;font-weight:700;color:#90CAF9}
+#sb .logo p{font-size:11px;color:#555;margin-top:2px}
+#sb nav{padding:6px 0;flex:1}
+.ng{margin:2px 0}.ngt{padding:7px 12px 3px;font-size:10px;font-weight:700;color:#555;text-transform:uppercase;letter-spacing:.8px}
+.ni{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;color:#aaa;font-size:12.5px;transition:all .15s;border-left:3px solid transparent}
+.ni:hover{background:#252540;color:#fff}.ni.active{background:rgba(21,101,192,.25);color:#90CAF9;border-left-color:#90CAF9}
+.ni .ic{font-size:15px;width:18px;text-align:center}
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#hdr{height:var(--hh);background:#fff;border-bottom:1px solid var(--g200);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0}
+#hdr h2{font-size:15px;font-weight:600;flex:1}
+#cnt{flex:1;overflow-y:auto;padding:18px}
+.card{background:#fff;border-radius:var(--rad);box-shadow:var(--sh);padding:18px;margin-bottom:14px}
+.ct{font-size:14px;font-weight:600;color:var(--g800);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.kpig{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:10px;margin-bottom:16px}
+.kpi{background:#fff;border-radius:var(--rad);box-shadow:var(--sh);padding:14px;border-top:3px solid var(--g300)}
+.kpi.b{border-top-color:var(--p)}.kpi.g{border-top-color:var(--g)}.kpi.o{border-top-color:var(--w)}.kpi.r{border-top-color:var(--r)}.kpi.pu{border-top-color:var(--pu)}.kpi.t{border-top-color:var(--t)}
+.kl{font-size:11px;color:var(--g600);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.kv{font-size:18px;font-weight:700}.ks{font-size:11px;color:var(--g500);margin-top:3px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead tr{background:var(--g100)}
+th{padding:9px 10px;text-align:left;font-weight:600;color:var(--g700);border-bottom:2px solid var(--g200);white-space:nowrap;font-size:11px}
+td{padding:8px 10px;border-bottom:1px solid var(--g100);vertical-align:middle}
+tr:hover td{background:var(--g50)}
+.mono{font-family:monospace;font-size:12px}
+.bs{display:inline-block;padding:2px 7px;border-radius:10px;font-size:11px;font-weight:600;white-space:nowrap}
+.s-ativa,.s-aprovado,.s-recebido,.s-devolvido,.s-faturado,.s-amortizado,.s-liquidado,.s-ativo{background:var(--gl);color:var(--g)}
+.s-inativa,.s-encerrada,.s-cancelada,.s-cancelado,.s-negado,.s-inativo{background:var(--g200);color:var(--g700)}
+.s-pendente,.s-pleiteado,.s-em-negociação,.s-retido,.s-em-aberto,.s-não-faturado{background:var(--wl);color:var(--w)}
+.s-vencido,.s-parcialmente-faturado,.s-parcialmente-devolvido{background:var(--rl);color:var(--r)}
+.s-recebido-parcialmente{background:#FFF3E0;color:#E65100}
+.s-a-receber{background:var(--gl);color:var(--g)}.s-a-pagar{background:var(--rl);color:var(--r)}
+.fg{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.fg.c2{grid-template-columns:repeat(2,1fr)}.fg.c3{grid-template-columns:repeat(3,1fr)}.fg.c4{grid-template-columns:repeat(4,1fr)}
+.fg .full{grid-column:1/-1}.fg .half{grid-column:span 2}
+.fgrp{display:flex;flex-direction:column;gap:4px}
+.fgrp label{font-size:11px;font-weight:700;color:var(--g700)}
+.fgrp input,.fgrp select,.fgrp textarea{padding:7px 9px;border:1px solid var(--g300);border-radius:6px;font-size:13px;font-family:var(--ff);background:#fff;color:var(--g900);transition:border .12s}
+.fgrp input:focus,.fgrp select:focus,.fgrp textarea:focus{outline:none;border-color:var(--p);box-shadow:0 0 0 3px rgba(21,101,192,.08)}
+.fgrp textarea{resize:vertical;min-height:60px}
+.fgrp input[readonly]{background:var(--g100);color:var(--g600)}
+.fsec{grid-column:1/-1;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--g600);letter-spacing:.5px;padding-top:4px;border-top:1px solid var(--g200);margin-top:4px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:6px;font-size:12.5px;font-weight:600;cursor:pointer;border:none;transition:all .15s;white-space:nowrap}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.bp{background:var(--p);color:#fff}.bp:hover:not(:disabled){background:var(--pd)}
+.bg{background:var(--g);color:#fff}.bg:hover:not(:disabled){background:#1B5E20}
+.br{background:var(--r);color:#fff}
+.bo{background:transparent;border:1px solid var(--g300);color:var(--g700)}.bo:hover:not(:disabled){border-color:var(--p);color:var(--p);background:var(--pl)}
+.bs2{padding:5px 10px;font-size:12px}
+.bi{padding:5px 6px;border-radius:6px;background:transparent;border:none;cursor:pointer;color:var(--g600);font-size:15px;transition:all .15s}
+.bi:hover{background:var(--g200);color:var(--g900)}
+.tb{display:flex;border-bottom:2px solid var(--g200);margin-bottom:14px;gap:0;flex-wrap:wrap}
+.t{padding:9px 14px;cursor:pointer;font-size:13px;font-weight:500;color:var(--g600);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s}
+.t:hover{color:var(--p)}.t.a{color:var(--p);border-bottom-color:var(--p);font-weight:600}
+.tbar{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.tbar .tr{margin-left:auto;display:flex;gap:8px}
+.sb2{position:relative}.sb2 input{padding:7px 9px 7px 30px;border:1px solid var(--g300);border-radius:6px;font-size:13px;width:200px}
+.sb2::before{content:'🔍';position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:12px}
+.fsel{padding:7px 9px;border:1px solid var(--g300);border-radius:6px;font-size:12.5px;background:#fff;cursor:pointer}
+.mov{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:500;display:flex;align-items:flex-start;justify-content:center;padding:30px 16px;overflow-y:auto}
+.mo{background:#fff;border-radius:var(--rad);width:100%;max-width:820px;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+.molg{max-width:1100px}.mosm{max-width:500px}.momd{max-width:650px}
+.moh{padding:14px 18px;border-bottom:1px solid var(--g200);display:flex;align-items:center;justify-content:space-between}
+.moh h3{font-size:15px;font-weight:600}
+.mob{padding:18px;max-height:calc(90vh - 110px);overflow-y:auto}
+.mof{padding:12px 18px;border-top:1px solid var(--g200);display:flex;justify-content:flex-end;gap:8px}
+.al{padding:10px 14px;border-radius:var(--rad);margin-bottom:14px;font-size:13px;display:flex;align-items:flex-start;gap:8px}
+.al-d{background:var(--rl);color:var(--r);border:1px solid #FFCDD2}.al-s{background:var(--gl);color:var(--g);border:1px solid #C8E6C9}
+.al-w{background:var(--wl);color:var(--w);border:1px solid #FFE0B2}.al-i{background:var(--pl);color:var(--p);border:1px solid #BBDEFB}
+/* ── Eventos Financeiros ── */
+.ev-box{border:1px solid var(--g200);border-radius:8px;padding:14px;margin-bottom:10px}
+.ev-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.ev-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:700}
+.ev-cred{background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7}
+.ev-deb{background:#FFEBEE;color:#B71C1C;border:1px solid #FFCDD2}
+.ev-tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;color:#fff}
+.liq-box{background:linear-gradient(135deg,#1565C0 0%,#0D47A1 100%);border-radius:8px;padding:16px 20px;color:#fff;margin-top:12px}
+.liq-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px}
+.liq-row.total{border-top:1px solid rgba(255,255,255,.3);margin-top:6px;padding-top:8px;font-size:16px;font-weight:700}
+.liq-row .neg{color:#FFCDD2}.liq-row .pos{color:#C8E6C9}.liq-row .tot{color:#FFF176}
+/* Resto */
+.ec3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px}
+.ecb{border-radius:var(--rad);padding:18px;text-align:center}
+.ecb.rec{background:var(--gl);border:2px solid var(--g)}.ecb.dev{background:var(--rl);border:2px solid var(--r)}.ecb.sal{background:var(--pl);border:2px solid var(--p)}
+.ecb .el{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}.ecb .ev{font-size:22px;font-weight:800}
+.lov{position:fixed;inset:0;background:rgba(255,255,255,.85);z-index:999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+.sp{width:32px;height:32px;border:3px solid var(--g200);border-top-color:var(--p);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ts{color:var(--g)}.td{color:var(--r)}.tw2{color:var(--w)}.tm{color:var(--g500)}.fb{font-weight:700}.tr2{text-align:right}
+.pw{background:var(--g200);border-radius:4px;height:7px;overflow:hidden;margin-top:4px}
+.pb{height:100%;border-radius:4px;background:var(--p)}
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;margin:1px}
+.tag-pre{background:#FCE4EC;color:#880E4F}.tag-pos{background:#E3F2FD;color:#1565C0}
+</style>
+</head>
+<body>
+<div id="sb">
+  <div class="logo"><h1>🏗️ Contratos</h1><p id="emp-label">Conectrom</p></div>
+  <nav>
+    <div class="ng"><div class="ngt">Visão Geral</div>
+      <div class="ni active" onclick="nav('dashboard')"><span class="ic">📊</span>Dashboard</div>
+      <div class="ni" onclick="nav('encontro')"><span class="ic">🔄</span>Encontro de Contas</div>
+    </div>
+    <div class="ng"><div class="ngt">Cadastros</div>
+      <div class="ni" onclick="nav('clientes')"><span class="ic">🏢</span>Clientes</div>
+      <div class="ni" onclick="nav('pessoas')"><span class="ic">👤</span>Fiscais / Gerentes</div>
+      <div class="ni" onclick="nav('seguimentos')"><span class="ic">⚙️</span>Seguimentos</div>
+      <div class="ni" onclick="nav('contratos')"><span class="ic">📄</span>Contratos</div>
+      <div class="ni" onclick="nav('aditivos')"><span class="ic">➕</span>Aditivos</div>
+    </div>
+    <div class="ng"><div class="ngt">Execução</div>
+      <div class="ni" onclick="nav('medicoes')"><span class="ic">📏</span>Medições</div>
+      <div class="ni" onclick="nav('notas')"><span class="ic">🧾</span>Notas Fiscais</div>
+      <div class="ni" onclick="nav('recebimentos')"><span class="ic">💳</span>Recebimentos</div>
+    </div>
+    <div class="ng"><div class="ngt">Financeiro</div>
+      <div class="ni" onclick="nav('adiantamentos')"><span class="ic">💵</span>Adiantamentos</div>
+      <div class="ni" onclick="nav('retencoes')"><span class="ic">🔒</span>Retenções</div>
+      <div class="ni" onclick="nav('juros')"><span class="ic">⏰</span>Juros e Multas</div>
+      <div class="ni" onclick="nav('outros')"><span class="ic">📦</span>Outros Valores</div>
+    </div>
+    <div class="ng"><div class="ngt">Gestão</div>
+      <div class="ni" onclick="nav('documentos')"><span class="ic">📁</span>Documentos</div>
+    </div>
+  </nav>
+</div>
+
+<div id="main">
+  <div id="hdr"><h2 id="ptitle">Dashboard</h2><div id="hact"></div>
+  <button onclick="abrirConfigApi()" title="Configurar URL da API" style="background:none;border:1px solid #ccc;border-radius:6px;padding:5px 10px;cursor:pointer;font-size:12px;color:#555;display:flex;align-items:center;gap:5px">⚙️ API</button>
+</div>
+
+<!-- Modal configuração da API -->
+<div id="modal-api" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:10px;padding:28px;width:520px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+    <h3 style="margin-bottom:8px;font-size:15px">⚙️ Configurar URL da API</h3>
+    <p style="font-size:12px;color:#666;margin-bottom:16px">Cole aqui a URL do Web App publicado no Google Apps Script.<br>Você obtém essa URL em <b>Implantar → Gerenciar implantações</b> no editor do Apps Script.</p>
+    <input id="input-api-url" type="text" placeholder="https://script.google.com/macros/s/SEU_ID/exec"
+      style="width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;font-size:13px;margin-bottom:16px">
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button onclick="document.getElementById('modal-api').style.display='none'"
+        style="padding:8px 18px;border:1px solid #ccc;border-radius:6px;background:#fff;cursor:pointer">Cancelar</button>
+      <button onclick="salvarConfigApi()"
+        style="padding:8px 18px;border:none;border-radius:6px;background:#1565C0;color:#fff;cursor:pointer;font-weight:600">Salvar</button>
+    </div>
+  </div>
+</div>
+  <div id="cnt"></div>
+</div>
+
+<div id="lov" class="lov"><div class="sp"></div><div style="font-size:12px;color:#666">Aguarde...</div></div>
+<div id="mc"></div>
+<div id="toasts" style="position:fixed;bottom:16px;right:16px;z-index:1000;display:flex;flex-direction:column;gap:6px"></div>
+
+<script>
+// ============================================================
+// STATE & UTILS
+// ============================================================
+const S = { config:{}, clientes:[], contratos:[], pessoas:[], seguimentos:[], tiposEvento:[], ufs:[] };
+const fmt = {
+  $: v=>'R$ '+(parseFloat(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}),
+  $s: v=>{ const n=parseFloat(v)||0; if(n>=1e6) return 'R$ '+(n/1e6).toFixed(2)+'M'; if(n>=1e3) return 'R$ '+(n/1e3).toFixed(0)+'K'; return fmt.$(v); },
+  d: v=>{ if(!v||v==='') return '—'; try{ const d=new Date(v+'T00:00:00'); return isNaN(d)?v:d.toLocaleDateString('pt-BR'); }catch(e){return v||'—';} },
+  n: v=>parseFloat(v)||0,
+  pct:(a,b)=>b>0?((a/b)*100).toFixed(1)+'%':'—',
+  days: d=>{ const n=parseInt(d)||0; if(n===0) return '<span class="ts">Em dia</span>'; if(n<30) return `<span style="color:var(--w)">${n}d</span>`; return `<span class="td">${n}d</span>`; },
+};
+
+function load(show){ document.getElementById('lov').style.display=show?'flex':'none'; }
+function toast(msg,type='ok'){
+  const el=document.createElement('div');
+  el.style.cssText=`background:${type==='ok'?'#2E7D32':type==='err'?'#B71C1C':'#E65100'};color:#fff;padding:10px 14px;border-radius:8px;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,.2);max-width:340px`;
+  el.textContent=msg; document.getElementById('toasts').appendChild(el); setTimeout(()=>el.remove(),3500);
+}
+// URL do Web App do Apps Script — configurável pelo usuário na tela
+function getApiUrl(){
+  return localStorage.getItem('API_URL') || '';
+}
+function api(action,payload={}){
+  const url = getApiUrl();
+  if(!url) return Promise.reject(new Error('URL da API não configurada. Clique em ⚙️ Configurar API.'));
+  return fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ action, payload })
+  })
+  .then(r => r.json())
+  .then(r => { if(r.ok) return r.data; throw new Error(r.error); });
+}
+function sb(s){
+  if(!s) return '—';
+  return `<span class="bs s-${s.toLowerCase().replace(/\s+/g,'-').replace(/[()\/]/g,'')}">${s}</span>`;
+}
+
+const pages={};
+const titles={dashboard:'Dashboard',encontro:'Encontro de Contas',clientes:'Clientes',pessoas:'Fiscais / Gerentes',seguimentos:'Seguimentos',contratos:'Contratos',aditivos:'Aditivos',medicoes:'Medições',notas:'Notas Fiscais',recebimentos:'Recebimentos',adiantamentos:'Adiantamentos',retencoes:'Retenções',juros:'Juros e Multas',outros:'Outros Valores',documentos:'Documentos'};
+
+function nav(page){
+  S.currentPage=page;
+  document.querySelectorAll('.ni').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(el=>{ if(el.getAttribute('onclick')===`nav('${page}')`) el.classList.add('active'); });
+  document.getElementById('ptitle').textContent=titles[page]||page;
+  document.getElementById('hact').innerHTML='';
+  if(pages[page]) pages[page]();
+}
+
+// ============================================================
+// MODAL ENGINE
+// ============================================================
+function modal(title,body,onSave,size=''){
+  document.getElementById('mc').innerHTML=`
+    <div class="mov" id="mov" onclick="closeOnOverlay(event)">
+      <div class="mo ${size}" id="modl">
+        <div class="moh"><h3>${title}</h3><button class="bi" onclick="closeModal()">✕</button></div>
+        <div class="mob" id="mob">${body}</div>
+        ${onSave?`<div class="mof"><button class="btn bo" onclick="closeModal()">Cancelar</button><button class="btn bp" onclick="_ms()">💾 Salvar</button></div>`
+                :`<div class="mof"><button class="btn bo" onclick="closeModal()">Fechar</button></div>`}
+      </div>
+    </div>`;
+  window._ms=onSave; document.body.style.overflow='hidden';
+}
+function closeModal(){ document.getElementById('mc').innerHTML=''; document.body.style.overflow=''; }
+function closeOnOverlay(e){ if(e.target.id==='mov') closeModal(); }
+function switchTab(id,el){
+  document.querySelectorAll('.t').forEach(t=>t.classList.remove('a')); el.classList.add('a');
+  document.querySelectorAll('[data-tab]').forEach(t=>t.style.display='none');
+  const tab=document.querySelector(`[data-tab="${id}"]`); if(tab) tab.style.display='';
+  const fn=window[`_lazy_${id}`]; if(fn&&!tab?.dataset?.loaded){ tab.dataset.loaded='1'; fn(); }
+}
+function delOK(msg){ return confirm(msg||'Excluir este registro?'); }
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+pages.dashboard=async function(){
+  const cnt=document.getElementById('cnt');
+  cnt.innerHTML='<div class="sp" style="margin:40px auto"></div>';
+  load(true);
+  try{
+    const d=await api('getDashboard',{});
+    const r=d.resumo;
+    const maxSeg=Math.max(...(d.porSegmento||[]).map(s=>s.totalContratado||0),1);
+    cnt.innerHTML=`
+    <div class="kpig">
+      <div class="kpi b"><div class="kl">Contratos Ativos</div><div class="kv">${r.ativos}</div><div class="ks">de ${r.totalContratos} total</div></div>
+      <div class="kpi g"><div class="kl">Total Contratado</div><div class="kv">${fmt.$s(r.totCtrt)}</div><div class="ks">${fmt.pct(r.totMed,r.totCtrt)} medido</div></div>
+      <div class="kpi g"><div class="kl">Total Recebido</div><div class="kv">${fmt.$s(r.totRec)}</div><div class="ks">de ${fmt.$s(r.totFat)} faturado</div></div>
+      <div class="kpi o"><div class="kl">A Receber</div><div class="kv">${fmt.$s(r.totARec)}</div></div>
+      <div class="kpi r"><div class="kl">A Devolver</div><div class="kv td">−${fmt.$s(r.totADev)}</div></div>
+      <div class="kpi pu"><div class="kl">Saldo Líquido</div><div class="kv ${r.saldoLiquido>=0?'ts':'td'}">${fmt.$s(r.saldoLiquido)}</div></div>
+      <div class="kpi ${r.nfsVencidas>0?'r':'b'}"><div class="kl">NFs Vencidas</div><div class="kv">${r.nfsVencidas}</div></div>
+      <div class="kpi o"><div class="kl">Vcto em 30d</div><div class="kv">${r.nfsVencendo}</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div class="card"><div class="ct">📊 Por Segmento</div>
+        ${(d.porSegmento||[]).map(s=>`<div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:3px">
+            <span>${s.segmento} <span style="color:#999;font-size:11px">(${s.count})</span></span>
+            <span class="fb">${fmt.$s(s.totalContratado)}</span>
+          </div>
+          <div class="pw"><div class="pb" style="width:${Math.min(100,s.totalContratado/maxSeg*100).toFixed(1)}%"></div></div>
+        </div>`).join('')||'<p style="color:#999">Sem dados</p>'}
+      </div>
+      <div class="card"><div class="ct">🏢 A Receber por Cliente</div>
+        ${(d.porCliente||[]).slice(0,8).map(c=>`
+          <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f5f5f5;font-size:13px">
+            <span>${c.cliente}</span><span class="fb ${c.aReceber>0?'ts':''}">${fmt.$s(c.aReceber)}</span>
+          </div>`).join('')||'<p style="color:#999">Sem dados</p>'}
+      </div>
+    </div>`;
+  }catch(e){ cnt.innerHTML=`<div class="al al-d">❌ ${e.message}</div>`; }
+  finally{ load(false); }
+};
+
+// ============================================================
+// ENCONTRO DE CONTAS
+// ============================================================
+pages.encontro=async function(){
+  const cnt=document.getElementById('cnt');
+  cnt.innerHTML='<div class="sp" style="margin:40px auto"></div>';
+  load(true);
+  try{
+    const d=await api('getEncontroDeContas',{});
+    const r=d.resumo;
+    cnt.innerHTML=`
+    <div class="al al-i">📅 Data Base: <strong>${d.dataBase}</strong></div>
+    <div class="ec3">
+      <div class="ecb rec"><div class="el" style="color:var(--g)">A Receber</div><div class="ev ts">${fmt.$(r.totalAReceber)}</div></div>
+      <div class="ecb dev"><div class="el" style="color:var(--r)">A Devolver</div><div class="ev td">−${fmt.$(r.totalADevolver)}</div></div>
+      <div class="ecb sal"><div class="el" style="color:var(--p)">Saldo Líquido Final</div><div class="ev" style="color:${r.saldoLiquido>=0?'var(--p)':'var(--r)'}">${fmt.$(r.saldoLiquido)}</div></div>
+    </div>
+    <div class="card">
+      <div class="ct">📊 Resumo por Natureza</div>
+      <div class="tw"><table>
+        <thead><tr><th>Natureza</th><th>Descrição</th><th class="tr2">Valor Líquido</th></tr></thead>
+        <tbody>
+          <tr><td class="ts fb">(+) Faturado a Receber</td><td>NFs emitidas pendentes</td><td class="tr2 ts fb">${fmt.$(r.faturadoAReceber)}</td></tr>
+          <tr><td class="ts fb">(+) Medido a Faturar</td><td>BMs aguardando NF</td><td class="tr2 ts fb">${fmt.$(r.medidoAFaturar)}</td></tr>
+          <tr><td class="ts fb">(+) Retenções</td><td>Saldo a ser devolvido</td><td class="tr2 ts fb">${fmt.$(r.retencoesAReceber)}</td></tr>
+          <tr><td class="ts fb">(+) Juros e Multas</td><td>Encargos por atraso</td><td class="tr2 ts fb">${fmt.$(r.jurosAReceber)}</td></tr>
+          <tr><td class="ts fb">(+) Aditivos Pleiteados</td><td>Em negociação</td><td class="tr2 ts fb">${fmt.$(r.aditivosPleiteados)}</td></tr>
+          <tr style="background:#FFF8F8"><td class="td fb">(−) Adiantamentos em Aberto</td><td>Não amortizados</td><td class="tr2 td fb">−${fmt.$(r.adiantamentosEmAberto)}</td></tr>
+          <tr style="background:#FFF8F8"><td class="td fb">(−) Outros A Devolver</td><td>Passivos diversos</td><td class="tr2 td fb">−${fmt.$(r.outrosADevolver)}</td></tr>
+          <tr style="background:var(--gl);font-weight:700"><td colspan="2" class="tr2">SALDO LÍQUIDO FINAL</td><td class="tr2 ${r.saldoLiquido>=0?'ts':'td'} fb">${fmt.$(r.saldoLiquido)}</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <div class="ct">📋 Saldos Contratuais</div>
+      <div class="tw"><table>
+        <thead><tr><th>Obra</th><th>Status</th><th class="tr2">Orig.</th><th class="tr2">Aditivos</th><th class="tr2">Total</th><th class="tr2">Acumulado</th><th class="tr2">Saldo</th></tr></thead>
+        <tbody>
+          ${d.saldosContratuais.map(s=>`<tr>
+            <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.obra}</td>
+            <td>${sb(s.situacao)}</td>
+            <td class="tr2">${fmt.$(s.contratadoOriginal)}</td><td class="tr2">${fmt.$(s.aditivos)}</td>
+            <td class="tr2 fb">${fmt.$(s.totalContratado)}</td>
+            <td class="tr2">${fmt.$(s.acumuladoAtual)}</td>
+            <td class="tr2 ${s.saldoContratual>0?'ts':'tm'} fb">${fmt.$(s.saldoContratual)}</td>
+          </tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:#999;padding:16px">Sem dados</td></tr>'}
+        </tbody>
+      </table></div>
+    </div>
+    <div class="card">
+      <div class="ct">📏 Medições a Faturar</div>
+      <div class="tw"><table>
+        <thead><tr><th>Obra</th><th>BM</th><th>Emissão</th><th class="tr2">Bruto</th><th class="tr2">Retenções</th><th class="tr2">Descontos</th><th class="tr2">Adiant.Desc.</th><th class="tr2">Reembolsos</th><th class="tr2">A Faturar</th></tr></thead>
+        <tbody>
+          ${d.detalheMedicoes.map(m=>`<tr>
+            <td>${m.obra}</td><td>BM ${m.bm}</td><td>${fmt.d(m.emissao)}</td>
+            <td class="tr2">${fmt.$(m.bruto)}</td>
+            <td class="tr2 td">${fmt.$(m.retencoes)}</td>
+            <td class="tr2 td">${fmt.$(m.descontos)}</td>
+            <td class="tr2 td">${fmt.$(m.adiantDesc)}</td>
+            <td class="tr2 ts">${fmt.$(m.reembolsos)}</td>
+            <td class="tr2 fb ts">${fmt.$(m.liquidoAFaturar)}</td>
+          </tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:#999;padding:16px">Sem medições a faturar</td></tr>'}
+        </tbody>
+      </table></div>
+    </div>`;
+  }catch(e){ cnt.innerHTML=`<div class="al al-d">❌ ${e.message}</div>`; }
+  finally{ load(false); }
+};
+
+// ============================================================
+// SEGUIMENTOS
+// ============================================================
+pages.seguimentos=async function(){
+  load(true); try{
+    const segs=await api('getSeguimentos',{}); S.seguimentos=segs;
+    document.getElementById('cnt').innerHTML=`
+    <div class="tbar"><div class="tr"><button class="btn bp" onclick="openSegModal()">➕ Novo</button></div></div>
+    <div class="card"><div class="tw"><table>
+      <thead><tr><th>ID</th><th>Nome</th><th>Descrição</th><th>Ativo</th><th></th></tr></thead>
+      <tbody>${segs.map(s=>`<tr><td class="mono">${s.ID_SEGUIMENTO}</td><td>${s.NOME}</td><td>${s.DESCRICAO||'—'}</td>
+        <td>${sb(s.ATIVO==='S'?'Ativo':'Inativo')}</td>
+        <td><button class="bi" onclick='openSegModal(${JSON.stringify(s)})'>✏️</button></td>
+      </tr>`).join('')||'<tr><td colspan="5" style="text-align:center;color:#999;padding:16px">Nenhum</td></tr>'}</tbody>
+    </table></div></div>`;
+  }catch(e){ document.getElementById('cnt').innerHTML=`<div class="al al-d">❌ ${e.message}</div>`; }
+  finally{ load(false); }
+};
+function openSegModal(d={}){
+  modal(`${d.ID_SEGUIMENTO?'Editar':'Novo'} Seguimento`,`
+    <form id="fseg" class="fg c2">
+      <div class="fgrp"><label>Nome *</label><input name="NOME" value="${d.NOME||''}" required></div>
+      <div class="fgrp"><label>Ativo</label><select name="ATIVO"><option value="S">Sim</option><option value="N" ${d.ATIVO==='N'?'selected':''}>Não</option></select></div>
+      <div class="fgrp full"><label>Descrição</label><textarea name="DESCRICAO">${d.DESCRICAO||''}</textarea></div>
+      ${d.ID_SEGUIMENTO?`<input type="hidden" name="ID_SEGUIMENTO" value="${d.ID_SEGUIMENTO}">`:''}
+    </form>`, async()=>{
+    const obj=fdata('fseg'); load(true);
+    try{ await api('saveSeguimento',obj); closeModal(); toast('Salvo!'); pages.seguimentos(); }
+    catch(e){ toast(e.message,'err'); } finally{ load(false); }
+  },'mosm');
+}
+
+// ============================================================
+// PESSOAS
+// ============================================================
+pages.pessoas=async function(){
+  load(true); try{
+    const ps=await api('getPessoas',{}); S.pessoas=ps;
+    document.getElementById('cnt').innerHTML=`
+    <div class="tbar"><div class="tr"><button class="btn bp" onclick="openPessoaModal()">➕ Nova Pessoa</button></div></div>
+    <div class="card"><div class="tw"><table>
+      <thead><tr><th>Nome</th><th>Cargo</th><th>Email</th><th>Telefone</th><th>Ativo</th><th></th></tr></thead>
+      <tbody>${ps.map(p=>`<tr>
+        <td>${p.NOME}</td><td>${p.CARGO||'—'}</td><td>${p.EMAIL||'—'}</td><td>${p.TELEFONE||'—'}</td>
+        <td>${sb(p.ATIVO==='S'?'Ativo':'Inativo')}</td>
+        <td><button class="bi" onclick='openPessoaModal(${JSON.stringify(p)})'>✏️</button>
+            <button class="bi" onclick="delRow('PESSOAS','${p.ID_PESSOA}',pages.pessoas)">🗑️</button></td>
+      </tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:#999;padding:16px">Nenhuma</td></tr>'}</tbody>
+    </table></div></div>`;
+  }catch(e){ document.getElementById('cnt').innerHTML=`<div class="al al-d">❌ ${e.message}</div>`; }
+  finally{ load(false); }
+};
+function openPessoaModal(d={}){
+  modal(`${d.ID_PESSOA?'Editar':'Nova'} Pessoa`,`
+    <form id="fps" class="fg c2">
+      <div class="fgrp"><label>Nome *</label><input name="NOME" value="${d.NOME||''}" required></div>
+      <div class="fgrp"><label>Cargo</label>
+        <select name="CARGO">${['Fiscal','Gerente','Engenheiro','Coordenador','Diretor','Outro'].map(o=>`<option ${d.CARGO===o?'selected':''}>${o}</option>`).join('')}</select>
+      </div>
+      <div class="fgrp"><label>Email</label><input name="EMAIL" type="email" value="${d.EMAIL||''}"></div>
+      <div class="fgrp"><label>Telefone</label><input name="TELEFONE" value="${d.TELEFONE||''}"></div>
+      <div class="fgrp"><label>Ativo</label><select name="ATIVO"><option value="S">Sim</option><option value="N" ${d.ATIVO==='N'?'selected':''}>Não</option></select></div>
+      ${d.ID_PESSOA?`<input type="hidden" name="ID_PESSOA" value="${d.ID_PESSOA}">`:''}
+    </form>`, async()=>{
+    const obj=fdata('fps'); load(true);
+    try{ await api('savePessoa',obj); closeModal(); toast('Salvo!'); S.pessoas=[]; pages.pessoas(); }
+    catch(e){ toast(e.message,'err'); } finally{ load(false); }
+  });
+}
+
+// ============================================================
+// CLIENTES
+// ============================================================
+pages.clientes=async function(){
+  load(true); try{
+    const cs=await api('getClientes',{}); S.clientes=cs; let sv='';
+    const render=()=>{
+      const f=cs.filter(c=>[c.NOME_CLIENTE,c.GRUPO,c.CNPJ].join(' ').toLowerCase().includes(sv));
+      document.getElementById('cli-tb').innerHTML=f.map(c=>`<tr>
+        <td>${c.NOME_CLIENTE}</td><td>${c.GRUPO||'—'}</td><td>${c.CNPJ||'—'}</td><td>${c.TIPO||'—'}</td>
+        <td>${sb(c.ATIVO==='S'||c.ATIVO===true?'Ativo':'Inativo')}</td>
+        <td><button class="bi" onclick='openCliModal(${JSON.stringify(c)})'>✏️</button>
+            <button class="bi" onclick="delRow('CLIENTES','${c.ID_CLIENTE}',()=>{S.clientes=[];pages.clientes()})">🗑️</button></td>
+      </tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:#999;padding:16px">Nenhum</td></tr>';
+    };
+    document.getElementById('cnt').innerHTML=`
+    <div class="tbar">
+      <div class="sb2"><input id="cli-s" placeholder="Buscar..."></div>
+      <div class="tr"><button class="btn bp" onclick="openCliModal()">➕ Novo Cliente</button></div>
+    </div>
+    <div class="card"><div class="tw"><table>
+      <thead><tr><th>Nome</th><th>Grupo</th><th>CNPJ</th><th>Tipo</th><th>Status</th><th></th></tr></thead>
+      <tbody id="cli-tb"></tbody>
+    </table></div></div>`;
+    render();
+    document.getElementById('cli-s').addEventListener('input',e=>{ sv=e.target.value.toLowerCase(); render(); });
+  }catch(e){ document.getElementById('cnt').innerHTML=`<div class="al al-d">❌ ${e.message}</div>`; }
+  finally{ load(false); }
+};
+function openCliModal(d={}){
+  modal(`${d.ID_CLIENTE?'Editar':'Novo'} Cliente`,`
+    <form id="fcli" class="fg">
+      <div class="fgrp"><label>Nome *</label><input name="NOME_CLIENTE" value="${d.NOME_CLIENTE||''}" required></div>
+      <div class="fgrp"><label>Grupo</label><input name="GRUPO" value="${d.GRUPO||''}"></div>
+      <div class="fgrp"><label>CNPJ</label><input name="CNPJ" value="${d.CNPJ||''}"></div>
+      <div class="fgrp"><label>Tipo</label><select name="TIPO">${['Privado','Público','Misto'].map(o=>`<option ${d.TIPO===o?'selected':''}>${o}</option>`).join('')}</select></div>
+      <div class="fgrp"><label>Contato</label><input name="CONTATO" value="${d.CONTATO||''}"></div>
+      <div class="fgrp"><label>Email</label><input name="EMAIL" type="email" value="${d.EMAIL||''}"></div>
+      <div class="fgrp"><label>Telefone</label><input name="TELEFONE" value="${d.TELEFONE||''}"></div>
+      <div class="fgrp"><label>Ativo</label><select name="ATIVO"><option value="S">Sim</option><option value="N" ${d.ATIVO==='N'?'selected':''}>Não</option></select></div>
+      <div class="fgrp full"><label>Observações</label><textarea name="OBSERVACOES">${d.OBSERVACOES||''}</textarea></div>
+      ${d.ID_CLIENTE?`<input type="hidden" name="ID_CLIENTE" value="${d.ID_CLIENTE}">`:''}
+    </form>`, async()=>{
+    const obj=fdata('fcli'); load(true);
+    try{ await api('saveCliente',obj); closeModal(); toast('Salvo!'); S.clientes=[]; pages.clientes(); }
+    catch(e){ toast(e.message,'err'); } finally{ load(false); }
+  });
+}
+
+// ============================================================
+// CONTRATOS
+// ============================================================
+pages.contratos=async function(){
+  load(true); try{
+    const [cs,cls]=await Promise.all([api('getContratos',{}),api('getClientes',{})]);
+    S.contratos=cs; S.clientes=cls; window._ctrs=cs;
+    const segs=[...new Set(cs.map(c=>c.SEGMENTO).filter(Boolean))];
+    document.getElementById('cnt').innerHTML=`
+    <div class="tbar">
+      <div class="sb2"><input id="ctr-s" placeholder="Buscar..."></div>
+      <select class="fsel" id="f-st" onchange="filtrarCtrs()"><option value="">Todos status</option><option>Ativa</option><option>Inativa</option><option>Encerrada</option></select>
+      <select class="fsel" id="f-sg" onchange="filtrarCtrs()"><option value="">Todos seg.</option>${segs.map(s=>`<option>${s}</option>`).join('')}</select>
+      <select class="fsel" id="f-ct" onchange="filtrarCtrs()"><option value="">Todas contratadas</option><option>Conectrom</option><option>EGT</option><option>Energias</option></select>
+      <div class="tr"><button class="btn bp" onclick="openCtrModal()">➕ Novo Contrato</button></div>
+    </div>
+    <div class="card"><div class="tw"><table>
+      <thead><tr><th>Nº</th><th>Obra</th><th>Cliente</th><th>Contratada</th><th>Seg.</th><th>Status</th><th class="tr2">Contratado</th><th class="tr2">Medido</th><th class="tr2">A Receber</th><th></th></tr></thead>
+      <tbody id="ctrs-tb"></tbody>
+    </table></div></div>`;
+    renderCtrs(cs);
+    document.getElementById('ctr-s').addEventListener('input',filtrarCtrs);
+  }catch(e){ document.getElementById('cnt').innerHTML=`<div class="al al-d">❌ ${e.message}</div>`; }
+  finally{ load(false); }
+};
+function filtrarCtrs(){
+  const sv=(document.getElementById('ctr-s')?.value||'').toLowerCase();
+  const st=document.getElementById('f-st')?.value||'';
+  const sg=document.getElementById('f-sg')?.value||'';
+  const ct=document.getElementById('f-ct')?.value||'';
+  let d=window._ctrs||[];
+  if(sv) d=d.filter(c=>[c.NOME_OBRA,c.NOME_CLIENTE,c.NUMERO_CONTRATO].join(' ').toLowerCase().includes(sv));
+  if(st) d=d.filter(c=>c.STATUS===st); if(sg) d=d.filter(c=>c.SEGMENTO===sg); if(ct) d=d.filter(c=>c.CONTRATADA===ct);
+  renderCtrs(d);
+}
+function renderCtrs(data){
+  const tb=document.getElementById('ctrs-tb'); if(!tb) return;
+  tb.innerHTML=data.map(c=>`<tr>
+    <td class="mono">${c.NUMERO_CONTRATO||'—'}</td>
+    <td style="max-width:170px"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500">${c.NOME_OBRA||'—'}</div>
+      <div style="font-size:11px;color:#999;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.CENTRO_CUSTO||''}</div></td>
+    <td>${c.NOME_CLIENTE||'—'}</td><td>${c.CONTRATADA||'—'}</td><td>${c.SEGMENTO||'—'}</td>
+    <td>${sb(c.STATUS)}</td>
+    <td class="tr2">${fmt.$s(c.TOTAL_CONTRATADO)}</td>
+    <td class="tr2">${fmt.$s(c._TOTAL_MEDIDO)}</td>
+    <td class="tr2 fb ${fmt.n(c._FATURADO_A_RECEBER)>0?'ts':''}">${fmt.$s(c._FATURADO_A_RECEBER)}</td>
+    <td style="white-space:nowrap">
+      <button class="bi" onclick="openCtrDetalhe('${c.ID_CONTRATO}')" title="Ver">👁️</button>
+      <button class="bi" onclick='openCtrModal(${JSON.stringify(c)})' title="Editar">✏️</button>
+      <button class="bi" onclick="delRow('CONTRATOS','${c.ID_CONTRATO}',()=>{S.contratos=[];pages.contratos()})" title="Excluir">🗑️</button>
+    </td>
+  </tr>`).join('')||'<tr><td colspan="10" style="text-align:center;color:#999;padding:16px">Nenhum contrato</td></tr>';
+}
+
+async function openCtrModal(d={}){
+  const [cls,pss,segs,ufs]=await Promise.all([
+    S.clientes.length?Promise.resolve(S.clientes):api('getClientes',{}),
+    S.pessoas.length?Promise.resolve(S.pessoas):api('getPessoas',{}),
+    S.seguimentos.length?Promise.resolve(S.seguimentos):api('getSeguimentos',{}),
+    S.ufs.length?Promise.resolve(S.ufs):api('getUFs',{})
+  ]);
+  S.clientes=cls; S.pessoas=pss; S.seguimentos=segs; S.ufs=ufs;
+  modal(`${d.ID_CONTRATO?'Editar':'Novo'} Contrato`,`
+    <form id="fctr" class="fg">
+      <div class="fsec">📋 Identificação</div>
+      <div class="fgrp"><label>Número</label><input name="NUMERO_CONTRATO" value="${d.NUMERO_CONTRATO||''}"></div>
+      <div class="fgrp"><label>Nome da Obra *</label><input name="NOME_OBRA" id="inp-obra" value="${d.NOME_OBRA||''}" required oninput="buildCC()"></div>
+      <div class="fgrp full"><label>Centro de Custo (auto)</label><input name="CENTRO_CUSTO" id="inp-cc" value="${d.CENTRO_CUSTO||''}" readonly></div>
+      <div class="fgrp full"><label>Objeto</label><textarea name="OBJETO_CONTRATO">${d.OBJETO_CONTRATO||''}</textarea></div>
+      <div class="fsec">🏢 Partes</div>
+      <div class="fgrp"><label>Cliente *</label>
+        <select name="ID_CLIENTE" id="sel-cli" onchange="updateCli(this)">
+          <option value="">Selecione...</option>
+          ${cls.map(c=>`<option value="${c.ID_CLIENTE}" data-nome="${c.NOME_CLIENTE}" data-grupo="${c.GRUPO||''}" ${d.ID_CLIENTE===c.ID_CLIENTE?'selected':''}>${c.NOME_CLIENTE}</option>`).join('')}
+        </select>
+      </div>
+      <div class="fgrp"><label>Nome Cliente</label><input name="NOME_CLIENTE" id="inp-cli" value="${d.NOME_CLIENTE||''}" oninput="buildCC()"></div>
+      <div class="fgrp"><label>Grupo</label><input name="GRUPO_CLIENTE" id="inp-grp" value="${d.GRUPO_CLIENTE||''}"></div>
+      <div class="fgrp"><label>Contratada *</label>
+        <select name="CONTRATADA">${['Conectrom','EGT','Energias'].map(o=>`<option ${d.CONTRATADA===o?'selected':''}>${o}</option>`).join('')}</select>
+      </div>
+      <div class="fgrp"><label>Fiscal</label>
+        <select name="ID_FISCAL" onchange="document.getElementById('inp-fisc').value=this.selectedOptions[0]?.text||''">
+          <option value="">—</option>
+          ${pss.filter(p=>['Fiscal','Engenheiro'].includes(p.CARGO)).map(p=>`<option value="${p.ID_PESSOA}" ${d.ID_FISCAL===p.ID_PESSOA?'selected':''}>${p.NOME}</option>`).join('')}
+        </select>
+      </div>
+      <div class="fgrp"><label>Nome Fiscal</label><input name="FISCAL" id="inp-fisc" value="${d.FISCAL||''}"></div>
+      <div class="fgrp"><label>Gerente</label>
+        <select name="ID_GERENTE" onchange="document.getElementById('inp-ger').value=this.selectedOptions[0]?.text||''">
+          <option value="">—</option>
+          ${pss.filter(p=>['Gerente','Diretor','Coordenador'].includes(p.CARGO)).map(p=>`<option value="${p.ID_PESSOA}" ${d.ID_GERENTE===p.ID_PESSOA?'selected':''}>${p.NOME}</option>`).join('')}
+        </select>
+      </div>
+      <div class="fgrp"><label>Nome Gerente</label><input name="GERENTE" id="inp-ger" value="${d.GERENTE||''}"></div>
+      <div class="fsec">📍 Localização e Segmento</div>
+      <div class="fgrp"><label>Segmento *</label>
+        <select name="SEGMENTO" id="sel-seg" onchange="document.getElementById('inp-seg').value=this.value;buildCC()">
+          <option value="">Selecione...</option>
+          ${segs.map(s=>`<option value="${s.NOME}" ${d.SEGMENTO===s.NOME?'selected':''}>${s.NOME}</option>`).join('')}
+        </select>
+      </div>
+      <input type="hidden" name="SEGMENTO" id="inp-seg" value="${d.SEGMENTO||''}">
+      <div class="fgrp"><label>UF *</label>
+        <select name="UF" id="sel-uf" onchange="loadCidades(this.value);buildCC()">
+          <option value="">UF</option>
+          ${ufs.map(u=>`<option ${d.UF===u?'selected':''}>${u}</option>`).join('')}
+        </select>
+      </div>
+      <div class="fgrp"><label>Cidade *</label>
+        <select name="CIDADE" id="sel-cid" onchange="buildCC()">
+          <option value="${d.CIDADE||''}">${d.CIDADE||'Selecione a UF'}</option>
+        </select>
+      </div>
+      <div class="fsec">📅 Vigência</div>
+      <div class="fgrp"><label>Data Contrato</label><input name="DATA_CONTRATO" type="date" value="${d.DATA_CONTRATO||''}"></div>
+      <div class="fgrp"><label>Início</label><input name="INICIO_VIGENCIA" type="date" value="${d.INICIO_VIGENCIA||''}"></div>
+      <div class="fgrp"><label>Término Original</label><input name="TERMINO_VIGENCIA_ORIGINAL" type="date" value="${d.TERMINO_VIGENCIA_ORIGINAL||''}"></div>
+      <div class="fgrp"><label>Término Atual</label><input name="TERMINO_VIGENCIA_ATUAL" type="date" value="${d.TERMINO_VIGENCIA_ATUAL||d.TERMINO_VIGENCIA_ORIGINAL||''}"></div>
+      <div class="fgrp"><label>Status</label>
+        <select name="STATUS">${['Ativa','Inativa','Encerrada','Suspensa'].map(o=>`<option ${d.STATUS===o?'selected':''}>${o}</option>`).join('')}</select>
+      </div>
+      <div class="fsec">💰 Valores</div>
+      <div class="fgrp"><label>Contratado Original (R$)</label><input name="VALOR_CONTRATADO_ORIGINAL" type="number" step="0.01" value="${d.VALOR_CONTRATADO_ORIGINAL||''}"></div>
+      <div class="fgrp"><label>Aditivos Aprovados (R$)</label><input name="VALOR_ADITIVOS_APROVADOS" type="number" step="0.01" value="${d.VALOR_ADITIVOS_APROVADOS||''}"></div>
+      <div class="fgrp"><label>Aditivos Pleiteados (R$)</label><input name="VALOR_ADITIVOS_PLEITEADOS" type="number" step="0.01" value="${d.VALOR_ADITIVOS_PLEITEADOS||''}"></div>
+      <div class="fgrp full"><label>Observações</label><textarea name="OBSERVACOES">${d.OBSERVACOES||''}</textarea></div>
+      ${d.ID_CONTRATO?`<input type="hidden" name="ID_CONTRATO" value="${d.ID_CONTRATO}">`:''}
+    </form>`, async()=>{
+    const obj=fdata('fctr');
+    const selSeg=document.getElementById('sel-seg');
+    if(selSeg) obj.SEGMENTO=selSeg.value;
+    if(obj.INICIO_VIGENCIA&&obj.TERMINO_VIGENCIA_ORIGINAL&&obj.TERMINO_VIGENCIA_ORIGINAL<obj.INICIO_VIGENCIA)
+      return toast('Término não pode ser anterior ao início!','err');
+    load(true);
+    try{ await api('saveContrato',obj); closeModal(); toast('Salvo!'); S.contratos=[]; pages.contratos(); }
+    catch(e){ toast(e.message,'err'); } finally{ load(false); }
+  },'molg');
+  if(d.UF) setTimeout(()=>loadCidades(d.UF,d.CIDADE),400);
+}
+function updateCli(sel){ const o=sel.selectedOptions[0]; if(o){ document.getElementById('inp-cli').value=o.dataset.nome||''; document.getElementById('inp-grp').value=o.dataset.grupo||''; buildCC(); } }
+function buildCC(){
+  const obra=document.getElementById('inp-obra')?.value||'';
+  const seg=document.getElementById('inp-seg')?.value||document.getElementById('sel-seg')?.value||'';
+  const cid=document.getElementById('sel-cid')?.value||'';
+  const uf=document.getElementById('sel-uf')?.value||'';
+  const cli=document.getElementById('inp-cli')?.value||'';
+  const cc=document.getElementById('inp-cc');
+  if(cc&&obra&&seg&&cid&&uf&&cli) cc.value=`${obra} - ${seg} - ${cid}/${uf} - ${cli}`;
+}
+async function loadCidades(uf,sel=''){
+  const s=document.getElementById('sel-cid'); if(!s||!uf) return;
+  s.innerHTML='<option>...</option>';
+  try{
+    const cs=await api('getCidades',{uf});
+    s.innerHTML='<option value="">Selecione</option>'+cs.map(c=>`<option ${c===sel?'selected':''}>${c}</option>`).join('');
+    if(sel&&!cs.includes(sel)) s.innerHTML+=`<option selected>${sel}</option>`;
+    buildCC();
+  }catch(e){ s.innerHTML=`<option value="${sel}">${sel||'Erro'}</option>`; }
+}
+
+async function openCtrDetalhe(id){
+  load(true);
+  try{
+    const c=await api('getContrato',{id});
+    modal(`📄 ${c.NOME_OBRA}`,`
+      <div class="tb">
+        <div class="t a" onclick="switchTab('geral',this)">Geral</div>
+        <div class="t" onclick="switchTab('financ',this)">Financeiro</div>
+        <div class="t" onclick="switchTab('meds',this)">Medições</div>
+        <div class="t" onclick="switchTab('nfs',this)">Notas Fiscais</div>
+        <div class="t" onclick="switchTab('adts',this)">Aditivos</div>
+        <div class="t" onclick="switchTab('adis',this)">Adiantamentos</div>
+        <div class="t" onclick="switchTab('docs',this)">Documentos</div>
+      </div>
+      <div data-tab="geral">
+        <div class="fg c3">
+          ${[['Número','NUMERO_CONTRATO'],['Contratada','CONTRATADA'],['Status','STATUS'],
+             ['Cliente','NOME_CLIENTE'],['Grupo','GRUPO_CLIENTE'],['Segmento','SEGMENTO'],
+             ['Cidade/UF','_LOC'],['Início','INICIO_VIGENCIA'],['Término Orig.','TERMINO_VIGENCIA_ORIGINAL'],
+             ['Término Atual','TERMINO_VIGENCIA_ATUAL'],['Fiscal','FISCAL'],['Gerente','GERENTE']
+          ].map(([l,k])=>`<div class="fgrp"><label>${l}</label>
+            <div style="padding:7px 9px;background:var(--g100);border-radius:6px;font-size:13px">
+              ${k==='_LOC'?`${c.CIDADE||'—'}/${c.UF||'—'}`:k.includes('VIGENCIA')||k.includes('INICIO')?fmt.d(c[k]):c[k]||'—'}
+            </div></div>`).join('')}
+          <div class="fgrp full"><label>Centro de Custo</label><div style="padding:7px 9px;background:var(--g100);border-radius:6px;font-size:13px">${c.CENTRO_CUSTO||'—'}</div></div>
+        </div>
+      </div>
+      <div data-tab="financ" style="display:none">
+        <div class="kpig">
+          ${[['Contratado Orig.','VALOR_CONTRATADO_ORIGINAL','b'],['Aditivos Aprov.','VALOR_ADITIVOS_APROVADOS','g'],
+             ['Total Contratado','TOTAL_CONTRATADO','b'],['Total Medido','_TOTAL_MEDIDO','g'],
+             ['Total Faturado','_TOTAL_FATURADO_BRUTO','b'],['Total Recebido','_TOTAL_RECEBIDO','g'],
+             ['Faturado a Rec.','_FATURADO_A_RECEBER','o'],['A Faturar','_TOTAL_A_FATURAR','o'],
+             ['Retenções','_RETENCAO_A_RECEBER','pu'],['Adiant. Abertos','_ADIANTAMENTOS_EM_ABERTO','r'],
+             ['Juros','_JUROS_A_RECEBER','o'],['Saldo Contratual','_SC','t']
+          ].map(([l,k,cl])=>`<div class="kpi ${cl}"><div class="kl">${l}</div>
+            <div class="kv" style="font-size:15px">${fmt.$(k==='_SC'?fmt.n(c.TOTAL_CONTRATADO)-fmt.n(c._TOTAL_MEDIDO):c[k])}</div></div>`).join('')}
+        </div>
+      </div>
+      <div data-tab="meds" style="display:none"><div id="dl-meds"><div class="sp" style="margin:16px auto"></div></div></div>
+      <div data-tab="nfs"  style="display:none"><div id="dl-nfs"><div class="sp" style="margin:16px auto"></div></div></div>
+      <div data-tab="adts" style="display:none"><div id="dl-adts"><div class="sp" style="margin:16px auto"></div></div></div>
+      <div data-tab="adis" style="display:none"><div id="dl-adis"><div class="sp" style="margin:16px auto"></div></div></div>
+      <div data-tab="docs" style="display:none"><div id="dl-docs"><div class="sp" style="margin:16px auto"></div></div></div>
+    `,null,'molg');
+    window._lazy_meds=()=>_dtMeds(c);
+    window._lazy_nfs=()=>_dtNFs(c);
+    window._lazy_adts=()=>_dtAdts(c);
+    window._lazy_adis=()=>_dtAdis(c);
+    window._lazy_docs=()=>_dtDocs(c);
+  }catch(e){ toast(e.message,'err'); } finally{ load(false); }
+}
+
+async function _dtMeds(c){
+  const el=document.getElementById('dl-meds'); if(!el) return;
+  try{
+    const ms=await api('getMedicoes',{idContrato:c.ID_CONTRATO});
+    const refresh=()=>_dtMeds(c);
+    el.innerHTML=`<div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+      <button class="btn bp bs2" onclick='openMedModal({ID_CONTRATO:"${c.ID_CONTRATO}",CENTRO_CUSTO:"${c.CENTRO_CUSTO}"})'>➕ Nova Medição</button></div>
+    <div class="tw"><table>
+      <thead><tr><th>BM</th><th>Período</th><th>Emissão</th><th class="tr2">Bruto</th><th class="tr2">Ret.</th><th class="tr2">Desc.</th><th class="tr2">Adiant.</th><th class="tr2">Reem.</th><th class="tr2">Líquido</th><th>Status</th><th></th></tr></thead>
+      <tbody>${ms.map(m=>`<tr>
+        <td>BM ${m.NUMERO_BM}</td>
+        <td style="white-space:nowrap;font-size:12px">${fmt.d(m.PERIODO_INICIO)} → ${fmt.d(m.PERIODO_FIM)}</td>
+        <td>${fmt.d(m.DATA_EMISSAO)}</td>
+        <td class="tr2">${fmt.$(m.VALOR_MEDIDO_BRUTO)}</td>
+        <td class="tr2 td">${fmt.$(m.TOTAL_RETENCOES)}</td>
+        <td class="tr2 td">${fmt.$(m.TOTAL_DESCONTOS)}</td>
+        <td class="tr2 td">${fmt.$(m.TOTAL_ADIANTAMENTOS_DESC)}</td>
+        <td class="tr2 ts">${fmt.$(m.TOTAL_REEMBOLSOS)}</td>
+        <td class="tr2 fb">${fmt.$(m.VALOR_LIQUIDO_MEDICAO)}</td>
+        <td>${sb(m.STATUS_MEDICAO)}</td>
+        <td style="white-space:nowrap">
+          <button class="bi" title="Eventos Financeiros" onclick="openEventosMedModal('${m.ID_MEDICAO}','BM ${m.NUMERO_BM}','${c.ID_CONTRATO}','${c.CENTRO_CUSTO||''}',${fmt.n(m.VALOR_MEDIDO_BRUTO)},()=>_dtMeds(${JSON.stringify(c)}))">⚡</button>
+          <button class="bi" onclick='openMedModal(${JSON.stringify(m)})'>✏️</button>
+        </td>
+      </tr>`).join('')||'<tr><td colspan="11" style="text-align:center;color:#999;padding:14px">Sem medições</td></tr>'}</tbody>
+    </table></div>`;
+  }catch(e){ el.innerHTML=`<div class="al al-d">${e.message}</div>`; }
+}
+
+async function _dtNFs(c){
+  const el=document.getElementById('dl-nfs'); if(!el) return;
+  try{
+    const ns=await api('getNotasFiscais',{idContrato:c.ID_CONTRATO});
+    el.innerHTML=`<div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+      <button class="btn bp bs2" onclick='openNFModal({ID_CONTRATO:"${c.ID_CONTRATO}",CENTRO_CUSTO:"${c.CENTRO_CUSTO}"})'>➕ Nova NF</button></div>
+    <div class="tw"><table>
+      <thead><tr><th>NF</th><th>Emissão</th><th>Vcto</th><th class="tr2">Bruto</th><th class="tr2">Deduções</th><th class="tr2">A Receber</th><th>Status</th><th></th></tr></thead>
+      <tbody>${ns.map(n=>`<tr>
+        <td class="mono">${n.NUMERO_NF}</td><td>${fmt.d(n.DATA_EMISSAO)}</td><td>${fmt.d(n.DATA_VENCIMENTO)}</td>
+        <td class="tr2">${fmt.$(n.VALOR_BRUTO_NF)}</td><td class="tr2 td">${fmt.$(n.TOTAL_DEDUCOES_LEGAIS)}</td>
+        <td class="tr2 fb ts">${fmt.$(n.VALOR_A_RECEBER)}</td>
+        <td>${sb(n.STATUS_NF)}</td>
+        <td style="white-space:nowrap">
+          <button class="bi" title="Eventos Financeiros NF" onclick="openEventosNFModal('${n.ID_NF}','NF ${n.NUMERO_NF}','${c.ID_CONTRATO}','${c.CENTRO_CUSTO||''}',${fmt.n(n.VALOR_LIQUIDO_NF)},()=>_dtNFs(${JSON.stringify(c)}))">⚡</button>
+          <button class="bi" onclick='openNFModal(${JSON.stringify(n)})'>✏️</button>
+          <button class="bi" onclick="openRecebModal('${n.ID_NF}','${n.NUMERO_NF}')">💳</button></td>
+      </tr>`).join('')||'<tr><td colspan="8" style="text-align:center;color:#999;padding:14px">Sem NFs</td></tr>'}</tbody>
+    </table></div>`;
+  }catch(e){ el.innerHTML=`<div class="al al-d">${e.message}</div>`; }
+}
+
+async function _dtAdts(c){
+  const el=document.getElementById('dl-adts'); if(!el) return;
+  try{
+    const as=await api('getAditivos',{idContrato:c.ID_CONTRATO});
+    el.innerHTML=`<div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+      <button class="btn bp bs2" onclick='openAdtModal({ID_CONTRATO:"${c.ID_CONTRATO}",CENTRO_CUSTO:"${c.CENTRO_CUSTO}"})'>➕ Novo Aditivo</button></div>
+    <div class="tw"><table>
+      <thead><tr><th>Nº</th><th>Tipo</th><th>Descrição</th><th>Novo Prazo</th><th class="tr2">Valor</th><th>Status</th><th>Doc</th></tr></thead>
+      <tbody>${as.map(a=>`<tr>
+        <td>${a.NUMERO_ADITIVO||'—'}</td><td>${a.TIPO_ADITIVO}</td>
+        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.DESCRICAO||'—'}</td>
+        <td>${fmt.d(a.NOVO_PRAZO)}</td>
+        <td class="tr2">${a.TIPO_ADITIVO==='Prazo'?'—':fmt.$(a.VALOR)}</td>
+        <td>${sb(a.STATUS)}</td>
+        <td>${a.DOCUMENTO_URL?`<a href="${a.DOCUMENTO_URL}" target="_blank" style="color:var(--p)">🔗</a>`:'—'}</td>
+      </tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:#999;padding:14px">Sem aditivos</td></tr>'}</tbody>
+    </table></div>`;
+  }catch(e){ el.innerHTML=`<div class="al al-d">${e.message}</div>`; }
+}
+
+async function _dtAdis(c){
+  const el=document.getElementById('dl-adis'); if(!el) return;
+  try{
+    const as=await api('getAdiantamentos',{idContrato:c.ID_CONTRATO});
+    el.innerHTML=`<div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+      <button class="btn bp bs2" onclick='openAdiModal({ID_CONTRATO:"${c.ID_CONTRATO}",CENTRO_CUSTO:"${c.CENTRO_CUSTO}"})'>➕ Novo Adiantamento</button></div>
+    <div class="tw"><table>
+      <thead><tr><th>Tipo</th><th>Descrição</th><th class="tr2">Recebido</th><th class="tr2">Amortizado</th><th class="tr2">Falta</th><th>Status</th></tr></thead>
+      <tbody>${as.map(a=>`<tr>
+        <td>${a.TIPO}</td><td>${a.DESCRICAO||'—'}</td>
+        <td class="tr2">${fmt.$(a.VALOR_RECEBIDO)}</td>
+        <td class="tr2 ts">${fmt.$(a.VALOR_AMORTIZADO)}</td>
+        <td class="tr2 fb td">${fmt.$(a.VALOR_A_AMORTIZAR)}</td>
+        <td>${sb(a.STATUS)}</td>
+      </tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:#999;padding:14px">Sem adiantamentos</td></tr>'}</tbody>
+    </table></div>`;
+  }catch(e){ el.innerHTML=`<div class="al al-d">${e.message}</div>`; }
+}
+
+async function _dtDocs(c){
+  const el=document.getElementById('dl-docs'); if(!el) return;
+  try{
+    const ds=await api('getDocumentos',{idContrato:c.ID_CONTRATO});
+    el.innerHTML=`<div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+      <button class="btn bp bs2" onclick='openDocModal({ID_CONTRATO:"${c.ID_CONTRATO}",CENTRO_CUSTO:"${c.CENTRO_CUSTO}"})'>➕ Novo</button></div>
+    <div class="tw"><table>
+      <thead><tr><th>Tipo</th><th>Número</th><th>Descrição</th><th>Emissão</th><th>Link</th></tr></thead>
+      <tbody>${ds.map(d=>`<tr>
+        <td>${d.TIPO_DOCUMENTO}</td><td>${d.NUMERO_DOCUMENTO||'—'}</td><td>${d.DESCRICAO||'—'}</td>
+        <td>${fmt.d(d.DATA_EMISSAO)}</td>
+        <td>${d.URL_ARQUIVO?`<a href="${d.URL_ARQUIVO}" target="_blank" style="color:var(--p)">🔗</a>`:'—'}</td>
+      </tr>`).join('')||'<tr><td colspan="5" style="text-align:center;color:#999;padding:14px">Sem documentos</td></tr>'}</tbody>
+    </table></div>`;
+  }catch(e){ el.innerHTML=`<div class="al al-d">${e.message}</div>`; }
+}
+
+// ============================================================
+// ★ EVENTOS FINANCEIROS — UI em GRUPOS (Medição e NF) ★
+// ============================================================
+
+// Configuração visual de cada grupo de evento
+const EV_GRUPOS_MED = [
+  { tipo:'RETENCAO_CONTRATUAL', label:'Retenção Contratual',   sinal:'DEBITO',  cor:'#880E4F', bg:'#FCE4EC', especial:'retencao', dica:'Será criado automaticamente no controle de Retenções.' },
+  { tipo:'RETENCAO_GARANTIA',   label:'Retenção de Garantia',  sinal:'DEBITO',  cor:'#AD1457', bg:'#FCE4EC', especial:'retencao', dica:'Será criado automaticamente no controle de Retenções.' },
+  { tipo:'ADIANTAMENTO_DESC',   label:'Desc. Adiantamento',    sinal:'DEBITO',  cor:'#E65100', bg:'#FFF3E0', especial:'adiant',   dica:'Selecione o adiantamento que está sendo amortizado.' },
+  { tipo:'DESCONTO_DIVERSO',    label:'Descontos Diversos',    sinal:'DEBITO',  cor:'#F57F17', bg:'#FFF8E1', especial:null,       dica:'Ex: combustível, alimentação, multas, etc.' },
+  { tipo:'MULTA_CONTRATUAL',    label:'Multas Contratuais',    sinal:'DEBITO',  cor:'#B71C1C', bg:'#FFEBEE', especial:null,       dica:'Penalidades contratuais.' },
+  { tipo:'OUTRO_DEBITO',        label:'Outros Débitos',        sinal:'DEBITO',  cor:'#455A64', bg:'#ECEFF1', especial:null,       dica:'Qualquer outro desconto não classificado.' },
+  { tipo:'REEMBOLSO',           label:'Reembolsos',            sinal:'CREDITO', cor:'#2E7D32', bg:'#E8F5E9', especial:null,       dica:'Ex: materiais, despesas reembolsadas pelo cliente.' },
+  { tipo:'BONUS',               label:'Bônus / Incentivos',   sinal:'CREDITO', cor:'#1565C0', bg:'#E3F2FD', especial:null,       dica:'Acréscimos e incentivos contratuais.' },
+  { tipo:'OUTRO_CREDITO',       label:'Outros Créditos',       sinal:'CREDITO', cor:'#00695C', bg:'#E0F2F1', especial:null,       dica:'Qualquer outro crédito.' },
+];
+
+const EV_GRUPOS_NF = [
+  { tipo:'RETENCAO_POS',        label:'Retenção Pós-Fat.',     sinal:'DEBITO',  cor:'#1565C0', bg:'#E3F2FD', especial:'retencao', dica:'Gerado automaticamente no controle de Retenções.' },
+  { tipo:'ADIANTAMENTO_DESC',   label:'Desc. Adiantamento',    sinal:'DEBITO',  cor:'#E65100', bg:'#FFF3E0', especial:'adiant',   dica:'Amortização de adiantamento nesta NF.' },
+  { tipo:'DESCONTO_DIVERSO',    label:'Descontos Diversos',    sinal:'DEBITO',  cor:'#F57F17', bg:'#FFF8E1', especial:null,       dica:'Outros descontos nesta nota.' },
+  { tipo:'OUTRO_DEBITO',        label:'Outros Débitos',        sinal:'DEBITO',  cor:'#455A64', bg:'#ECEFF1', especial:null,       dica:'' },
+  { tipo:'JUROS_ATRASO',        label:'Juros por Atraso',      sinal:'CREDITO', cor:'#B71C1C', bg:'#FFEBEE', especial:null,       dica:'Juros/multas do cliente por atraso cobrados nesta NF.' },
+  { tipo:'MULTA_ATRASO',        label:'Multa por Atraso',      sinal:'CREDITO', cor:'#880E4F', bg:'#FCE4EC', especial:null,       dica:'' },
+  { tipo:'REEMBOLSO',           label:'Reembolsos',            sinal:'CREDITO', cor:'#2E7D32', bg:'#E8F5E9', especial:null,       dica:'' },
+  { tipo:'OUTRO_CREDITO',       label:'Outros Créditos',       sinal:'CREDITO', cor:'#00695C', bg:'#E0F2F1', especial:null,       dica:'' },
+];
+
+// Estado dos grupos em edição (em memória enquanto modal está aberto)
+let _evState = {}; // { [tipo]: [{id,descricao,valor,idAdiantamento,...}] }
+let _evCtx   = {}; // contexto: {idMedicao|idNF, idContrato, centroCusto, bruto, labelBruto, modo:'med'|'nf'}
+
+function _evGrupos(modo){ return modo==='nf' ? EV_GRUPOS_NF : EV_GRUPOS_MED; }
+
+// Inicializa _evState a partir dos eventos salvos
+function _evFromSaved(eventos, modo){
+  const grupos = _evGrupos(modo);
+  const state = {};
+  grupos.forEach(g => state[g.tipo] = []);
+  eventos.forEach(e => {
+    const tipo = e.TIPO_EVENTO;
+    if(!state[tipo]) state[tipo] = [];
+    state[tipo].push({
+      id: e.ID_EVENTO,
+      descricao: e.DESCRICAO || '',
+      valor: e.VALOR || '',
+      idAdiantamento: e.ID_ADIANTAMENTO_REF || '',
+      idRetencaoGerada: e.ID_RETENCAO_GERADA || '',
+      amortCriada: e._AMORTIZACAO_CRIADA || '',
+      dataEvento: e.DATA_EVENTO || '',
+    });
+  });
+  return state;
+}
+
+// Renderiza o painel completo de eventos
+function _evRender(adiantamentos){
+  const grupos = _evGrupos(_evCtx.modo);
+  const bruto  = fmt.n(_evCtx.bruto);
+  const adisAtivos = adiantamentos.filter(a=>a.STATUS!=='Amortizado');
+
+  let totalDeb=0, totalCred=0, byTipo={};
+  grupos.forEach(g=>{
+    const itens = _evState[g.tipo]||[];
+    const soma = itens.reduce((s,i)=>s+fmt.n(i.valor),0);
+    byTipo[g.tipo]=soma;
+    if(g.sinal==='DEBITO') totalDeb+=soma; else totalCred+=soma;
+  });
+  const liquido = bruto - totalDeb + totalCred;
+
+  // Resumo no topo
+  let html = `<div style="background:#263238;border-radius:8px;padding:12px 16px;margin-bottom:14px;color:#fff;display:flex;gap:20px;flex-wrap:wrap;align-items:center">
+    <div><div style="font-size:10px;opacity:.7;text-transform:uppercase">Valor Bruto</div><div style="font-size:16px;font-weight:700;color:#80CBC4">${fmt.$(bruto)}</div></div>
+    <div style="font-size:18px;opacity:.4">−</div>
+    <div><div style="font-size:10px;opacity:.7;text-transform:uppercase">Débitos</div><div style="font-size:16px;font-weight:700;color:#EF9A9A">−${fmt.$(totalDeb)}</div></div>
+    <div style="font-size:18px;opacity:.4">+</div>
+    <div><div style="font-size:10px;opacity:.7;text-transform:uppercase">Créditos</div><div style="font-size:16px;font-weight:700;color:#A5D6A7">+${fmt.$(totalCred)}</div></div>
+    <div style="font-size:18px;opacity:.4">=</div>
+    <div><div style="font-size:10px;opacity:.7;text-transform:uppercase">Líquido</div><div style="font-size:18px;font-weight:800;color:#FFF176">${fmt.$(liquido)}</div></div>
+  </div>`;
+
+  // Grupos
+  grupos.forEach(g=>{
+    const itens = _evState[g.tipo] || [];
+    const soma  = byTipo[g.tipo]||0;
+    const isEsp = g.especial;
+    const tipoStr = g.sinal==='DEBITO' ? '−' : '+';
+    html += `<div style="border:1px solid ${g.cor}33;border-radius:8px;margin-bottom:10px;overflow:hidden">
+      <div style="background:${g.bg};border-bottom:1px solid ${g.cor}33;padding:8px 12px;display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="background:${g.cor};color:#fff;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">${tipoStr}</span>
+          <span style="font-weight:700;font-size:13px;color:${g.cor}">${g.label}</span>
+          ${isEsp==='retencao'?`<span style="background:${g.cor};color:#fff;font-size:10px;padding:1px 6px;border-radius:8px">⚠️ gera retenção</span>`:''}
+          ${isEsp==='adiant'?`<span style="background:${g.cor};color:#fff;font-size:10px;padding:1px 6px;border-radius:8px">⚠️ amortiza adiant.</span>`:''}
+          ${soma>0?`<span style="font-size:12px;font-weight:600;color:${g.cor}">${fmt.$(soma)}</span>`:''}
+        </div>
+        <button class="btn bo bs2" style="border-color:${g.cor};color:${g.cor}" onclick="_evAddItem('${g.tipo}')">+ Item</button>
+      </div>`;
+
+    if(g.dica && itens.length===0) html += `<div style="padding:6px 12px;font-size:11px;color:#999;font-style:italic">${g.dica}</div>`;
+
+    itens.forEach((item, idx)=>{
+      html += `<div style="padding:8px 12px;border-bottom:1px solid ${g.cor}22;display:grid;grid-template-columns:1fr ${isEsp==='adiant'?'180px ':''} 130px 34px;gap:8px;align-items:center" id="ev-item-${g.tipo}-${idx}">
+        <input placeholder="Descrição do item (ex: Combustível)" value="${item.descricao||''}" oninput="_evUpdate('${g.tipo}',${idx},'descricao',this.value)"
+          style="padding:6px 8px;border:1px solid var(--g300);border-radius:5px;font-size:13px;width:100%">
+        ${isEsp==='adiant'?`<select onchange="_evUpdate('${g.tipo}',${idx},'idAdiantamento',this.value)" style="padding:6px;border:1px solid var(--g300);border-radius:5px;font-size:12px">
+          <option value="">Adiantamento...</option>
+          ${adisAtivos.map(a=>`<option value="${a.ID_ADIANTAMENTO}" ${item.idAdiantamento===a.ID_ADIANTAMENTO?'selected':''}>${a.DESCRICAO||a.TIPO} (−${fmt.$(a.VALOR_A_AMORTIZAR)})</option>`).join('')}
+        </select>`:''}
+        <input type="number" step="0.01" min="0" placeholder="Valor R$" value="${item.valor||''}" oninput="_evUpdate('${g.tipo}',${idx},'valor',this.value)"
+          style="padding:6px 8px;border:1px solid var(--g300);border-radius:5px;font-size:13px;text-align:right;width:100%">
+        <button onclick="_evRemItem('${g.tipo}',${idx})" style="background:#ffebee;border:1px solid #ffcdd2;color:#b71c1c;border-radius:5px;padding:6px;cursor:pointer;font-size:14px">✕</button>
+      </div>`;
+    });
+
+    html += `</div>`;
+  });
+
+  html += `<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px;padding-top:8px;border-top:1px solid var(--g200)">
+    <button class="btn bo" onclick="closeModal()">Cancelar</button>
+    <button class="btn bp" onclick="_evSalvar()">💾 Salvar Eventos</button>
+  </div>`;
+
+  return html;
+}
+
+function _evAddItem(tipo){
+  if(!_evState[tipo]) _evState[tipo]=[];
+  _evState[tipo].push({id:'',descricao:'',valor:'',idAdiantamento:'',idRetencaoGerada:'',amortCriada:'',dataEvento:''});
+  _evRefresh();
+}
+
+function _evRemItem(tipo, idx){
+  if(!_evState[tipo]) return;
+  _evState[tipo].splice(idx,1);
+  _evRefresh();
+}
+
+function _evUpdate(tipo, idx, campo, val){
+  if(!_evState[tipo]||!_evState[tipo][idx]) return;
+  _evState[tipo][idx][campo] = val;
+  // Recalcular resumo sem re-renderizar tudo (só o header)
+  _evAtualizarResumo();
+}
+
+function _evAtualizarResumo(){
+  const grupos = _evGrupos(_evCtx.modo);
+  const bruto  = fmt.n(_evCtx.bruto);
+  let totalDeb=0, totalCred=0;
+  grupos.forEach(g=>{
+    const soma = (_evState[g.tipo]||[]).reduce((s,i)=>s+fmt.n(i.valor),0);
+    if(g.sinal==='DEBITO') totalDeb+=soma; else totalCred+=soma;
+  });
+  // Atualizar apenas os valores no resumo
+  const el=document.getElementById('ev-resumo');
+  if(el) el.innerHTML=_evResumoHtml(bruto,totalDeb,totalCred);
+}
+
+function _evResumoHtml(bruto,deb,cred){
+  return `<div><div style="font-size:10px;opacity:.7;text-transform:uppercase">Valor Bruto</div><div style="font-size:16px;font-weight:700;color:#80CBC4">${fmt.$(bruto)}</div></div>
+    <div style="font-size:18px;opacity:.4">−</div>
+    <div><div style="font-size:10px;opacity:.7;text-transform:uppercase">Débitos</div><div style="font-size:16px;font-weight:700;color:#EF9A9A">−${fmt.$(deb)}</div></div>
+    <div style="font-size:18px;opacity:.4">+</div>
+    <div><div style="font-size:10px;opacity:.7;text-transform:uppercase">Créditos</div><div style="font-size:16px;font-weight:700;color:#A5D6A7">+${fmt.$(cred)}</div></div>
+    <div style="font-size:18px;opacity:.4">=</div>
+    <div><div style="font-size:10px;opacity:.7;text-transform:uppercase">Líquido</div><div style="font-size:18px;font-weight:800;color:#FFF176">${fmt.$(bruto-deb+cred)}</div></div>`;
+}
+
+function _evRefresh(){
+  const el=document.getElementById('ev-body');
+  if(!el) return;
+  // Re-renderizar apenas o corpo (preservar o header resumo via id separado)
+  el.innerHTML=_evRender(window._evAdiantamentos||[]);
+}
+
+async function _evSalvar(){
+  const ctx = _evCtx;
+  const grupos = _evGrupos(ctx.modo);
+  const gruposPayload = grupos.map(g=>({
+    tipo: g.tipo,
+    items: (_evState[g.tipo]||[]).filter(i=>fmt.n(i.valor)>0)
+  })).filter(g=>g.items.length>0);
+
+  load(true);
+  try{
+    if(ctx.modo==='nf'){
+      await api('saveEventosLoteNF',{
+        idNF: ctx.idRef, idContrato: ctx.idContrato,
+        centroCusto: ctx.centroCusto, grupos: gruposPayload,
+      });
+    } else {
+      await api('saveEventosLote',{
+        idMedicao: ctx.idRef, idContrato: ctx.idContrato,
+        centroCusto: ctx.centroCusto, grupos: gruposPayload,
+      });
+    }
+    closeModal();
+    toast('Eventos salvos com sucesso!');
+    // Recarregar a lista de onde veio
+    if(ctx.refreshFn) ctx.refreshFn();
+  }catch(e){ toast(e.message,'err'); } finally{ load(false); }
+}
+
+// Abrir modal de eventos de uma MEDIÇÃO
+async function openEventosMedModal(idMedicao, labelBM, idContrato, centroCusto, bruto, refreshFn){
+  load(true);
+  try{
+    const [eventos, adiantamentos] = await Promise.all([
+      api('getEventosMedicao',{idMedicao}),
+      api('getAdiantamentos',{idContrato: idContrato||''}),
+    ]);
+
+    _evCtx = {
+      modo:'med', idRef: idMedicao, idContrato: idContrato||'',
+      centroCusto: centroCusto||'', bruto: bruto||0,
+      refreshFn: refreshFn||null,
+    };
+    _evState  = _evFromSaved(eventos, 'med');
+    window._evAdiantamentos = adiantamentos;
+
+    document.getElementById('mc').innerHTML=`
+      <div class="mov" id="mov" onclick="closeOnOverlay(event)">
+        <div class="mo molg" id="modl">
+          <div class="moh">
+            <h3>⚡ Eventos Financeiros — ${labelBM}</h3>
+            <button class="bi" onclick="closeModal()">✕</button>
+          </div>
+          <div class="mob" id="ev-body" style="max-height:calc(90vh - 70px)"></div>
+        </div>
+      </div>`;
+    document.body.style.overflow='hidden';
+    document.getElementById('ev-body').innerHTML = _evRender(adiantamentos);
+  }catch(e){ toast(e.message,'err'); } finally{ load(false); }
+}
+
+// Abrir modal de eventos de uma NOTA FISCAL
+async function openEventosNFModal(idNF, labelNF, idContrato, centroCusto, bruto, refreshFn){
+  load(true);
+  try{
+    const [eventos, adiantamentos] = await Promise.all([
+      api('getEventosNF',{idNF}),
+      api('getAdiantamentos',{idContrato: idContrato||''}),
+    ]);
+
+    _evCtx = {
+      modo:'nf', idRef: idNF, idContrato: idContrato||'',
+      centroCusto: centroCusto||'', bruto: bruto||0,
+      refreshFn: refreshFn||null,
+    };
+    _evState  = _evFromSaved(eventos, 'nf');
+    window._evAdiantamentos = adiantamentos;
+
+    document.getElementById('mc').innerHTML=`
+      <div class="mov" id="mov" onclick="closeOnOverlay(event)">
+        <div class="mo molg" id="modl">
+          <div class="moh">
+            <h3>⚡ Eventos Financeiros — ${labelNF}</h3>
+            <button class="bi" onclick="closeModal()">✕</button>
+          </div>
+          <div class="mob" id="ev-body" style="max-height:calc(90vh - 70px)"></div>
+        </div>
+      </div>`;
+    document.body.style.overflow='hidden';
+    document.getElementById('ev-body').innerHTML = _evRender(adiantamentos);
+  }catch(e){ toast(e.message,'err'); } finally{ load(false); }
+}
+
+// ============================================================
+// ADITIVOS
+// ============================================================
+pages.aditivos=async function(){
+  load(true); try{
+    const [as,cs]=await Promise.all([api('getAditivos',{}),api('getContratos',{})]);
+    const cm={}; cs.forEach(c=>cm[c.ID_CONTRATO]=c.NOME_OBRA);
+    document.getElementById('cnt').innerHTML=`
+    <div class="tbar"><div class="tr"><button class="btn bp" onclick="openAdtModal()">➕ Novo Aditivo</button></div></div>
+    <div class="card"><div class="tw"><table>
+      <thead><tr><th>Obra</th><th>Nº</th><th>Tipo</th><th>Descrição</th><th>Novo Prazo</th><th class="tr2">Valor</th><th>Status</th><th>Doc</th><th></th></tr></thead>
+      <tbody>${as.map(a=>`<tr>
+        <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cm[a.ID_CONTRATO]||'—'}</td>
+        <td>${a.NUMERO_ADITIVO||'—'}</td><td>${a.TIPO_ADITIVO}</td>
+        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.DESCRICAO||'—'}</td>
+        <td>${fmt.d(a.NOVO_PRAZO)}</td>
+        <td class="tr2">${a.TIPO_ADITIVO==='Prazo'?'—':fmt.$(a.VALOR)}</td>
+        <td>${sb(a.STATUS)}</td>
+        <td>${a.DOCUMENTO_URL?`<a href="${a.DOCUMENTO_URL}" target="_blank" style="color:var(--p)">🔗</a>`:'—'}</td>
+        <td><button class="bi" onclick='openAdtModal(${JSON.stringify(a)})'>✏️</button>
+            <button class="bi" onclick="delRow('ADITIVOS','${a.ID_ADITIVO}',pages.aditivos)">🗑️</button></td>
+      </tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:#999;padding:16px">Nenhum</td></tr>'}</tbody>
+    </table></div></div>`;
+  }catch(e){ document.getElementById('cnt').innerHTML=`<div class="al al-d">❌ ${e.message}</div>`; }
+  finally{ load(false); }
+};
+
+async function openAdtModal(d={}){
+  const cs=S.contratos.length?S.contratos:await api('getContratos',{});
+  modal(`${d.ID_ADITIVO?'Editar':'Novo'} Aditivo`,`
+    <form id="fadt" class="fg">
+      <div class="fgrp full"><label>Contrato *</label>
+        <select name="ID_CONTRATO" onchange="updateCtrCC(this,'adt-cc')">
+          <option value="">Selecione...</option>
+          ${cs.map(c=>`<option value="${c.ID_CONTRATO}" data-cc="${c.CENTRO_CUSTO||''}" ${d.ID_CONTRATO===c.ID_CONTRATO?'selected':''}>${c.NOME_OBRA}</option>`).join('')}
+        </select>
+      </div>
+      <input type="hidden" name="CENTRO_CUSTO" id="adt-cc" value="${d.CENTRO_CUSTO||''}">
+      <div class="fgrp"><label>Número</label><input name="NUMERO_ADITIVO" value="${d.NUMERO_ADITIVO||''}"></div>
+      <div class="fgrp"><label>Tipo *</label>
+        <select name="TIPO_ADITIVO" onchange="toggleAdtTipo(this.value)">
+          ${['Prazo','Valor','Prazo e Valor','Escopo','Reequilíbrio'].map(o=>`<option ${d.TIPO_ADITIVO===o?'selected':''}>${o}</option>`).join('')}
+        </select>
+      </div>
+      <div class="fgrp full"><label>Descrição *</label><input name="DESCRICAO" value="${d.DESCRICAO||''}" required></div>
+      <div class="fgrp" id="adt-prazo-g"><label>Novo Prazo</label><input name="NOVO_PRAZO" type="date" value="${d.NOVO_PRAZO||''}"></div>
+      <div class="fgrp" id="adt-valor-g"><label>Valor (R$)</label><input name="VALOR" type="number" step="0.01" value="${d.VALOR||''}"></div>
+      <div class="fgrp"><label>Status</label>
+        <select name="STATUS">${['Aprovado','Pleiteado','Em Negociação','Negado'].map(o=>`<option ${d.STATUS===o?'selected':''}>${o}</option>`).join('')}</select>
+      </div>
+      <div class="fgrp"><label>Data Assinatura</label><input name="DATA_ASSINATURA" type="date" value="${d.DATA_ASSINATURA||''}"></div>
+      <div class="fgrp"><label>Data Solicitação</label><input name="DATA_SOLICITACAO" type="date" value="${d.DATA_SOLICITACAO||''}"></div>
+      <div class="fgrp full"><label>URL Documento</label><input name="DOCUMENTO_URL" type="url" value="${d.DOCUMENTO_URL||''}"></div>
+      <div class="fgrp full"><label>Observações</label><textarea name="OBSERVACOES">${d.OBSERVACOES||''}</textarea></div>
+      ${d.ID_ADITIVO?`<input type="hidden" name="ID_ADITIVO" value="${d.ID_ADITIVO}">`:''}
+    </form>`, async()=>{
+    const obj=fdata('fadt');
+    load(true); try{ await api('saveAditivo',obj); closeModal(); toast('Salvo!'); pages.aditivos(); }
+    catch(e){ toast(e.message,'err'); } finally{ load(false); }
+  });
+  setTimeout(()=>toggleAdtTipo(d.TIPO_ADITIVO||'Prazo'),200);
+}
+function toggleAdtTipo(t){
+  const pg=document.getElementById('adt-prazo-g'); const vg=document.getElementById('adt-valor-g');
+  if(pg) pg.style.display=t==='Valor'?'none':''; if(vg) vg.style.display=t==='Prazo'?'none':'';
+}
+
+// ============================================================
+// MEDIÇÕES
+// ============================================================
+pages.medicoes=async function(){
+  load(true); try{
+    const [ms,cs]=await Promise.all([api('getMedicoes',{}),api('getContratos',{})]);
+    const cm={}; cs.forEach(c=>cm[c.ID_CONTRATO]=c.NOME_OBRA);
+    document.getElementById('cnt').innerHTML=`
+    <div class="tbar"><div class="tr"><button class="btn bp" onclick="openMedModal()">➕ Nova Medição</button></div></div>
+    <div class="card">
+      <div class="al al-i" style="margin-bottom:14px">⚡ Clique no botão <strong>⚡</strong> de cada BM para gerenciar eventos financeiros (retenções, descontos, adiantamentos, reembolsos).</div>
+      <div class="tw"><table>
+        <thead><tr><th>Obra</th><th>BM</th><th>Emissão</th><th class="tr2">Bruto</th><th class="tr2">Ret.</th><th class="tr2">Desc.</th><th class="tr2">Adiant.</th><th class="tr2">Reem.</th><th class="tr2">Líquido</th><th>Status</th><th></th></tr></thead>
+        <tbody>${ms.map(m=>`<tr>
+          <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cm[m.ID_CONTRATO]||'—'}</td>
+          <td>BM ${m.NUMERO_BM}</td><td>${fmt.d(m.DATA_EMISSAO)}</td>
+          <td class="tr2">${fmt.$(m.VALOR_MEDIDO_BRUTO)}</td>
+          <td class="tr2 td">${fmt.$(m.TOTAL_RETENCOES)}</td>
+          <td class="tr2 td">${fmt.$(m.TOTAL_DESCONTOS)}</td>
+          <td class="tr2 td">${fmt.$(m.TOTAL_ADIANTAMENTOS_DESC)}</td>
+          <td class="tr2 ts">${fmt.$(m.TOTAL_REEMBOLSOS)}</td>
+          <td class="tr2 fb">${fmt.$(m.VALOR_LIQUIDO_MEDICAO)}</td>
+          <td>${sb(m.STATUS_MEDICAO)}</td>
+          <td style="white-space:nowrap">
+            <button class="bi" title="Eventos Financeiros" onclick="openEventosMedModal('${m.ID_MEDICAO}','BM ${m.NUMERO_BM}','${m.ID_CONTRATO}','${(m.CENTRO_CUSTO||'').replace(/'/g,"\\'")}',${fmt.n(m.VALOR_MEDIDO_BRUTO)},pages.medicoes)">⚡</button>
+            <button class="bi" onclick='openMedModal(${JSON.stringify(m)})'>✏️</button>
+            <button class="bi" onclick="delRow('MEDICOES','${m.ID_MEDICAO}',pages.medicoes)">🗑️</button>
+          </td>
+        </tr>`).join('')||'<tr><td colspan="11" style="text-align:center;color:#999;padding:16px">Nenhuma medição</td></tr>'}</tbody>
+      </table></div>
+    </div>`;
+  }catch(e){ document.getElementById('cnt').innerHTML=`<div class="al al-d">❌ ${e.message}</div>`; }
+  finally{ load(false); }
+};
+
+async function openMedModal(d={}){
+  const cs=await api('getContratosPorCC',{});
+  modal(`${d.ID_MEDICAO?'Editar':'Nova'} Medição`,`
+    <form id="fmed" class="fg">
+      <div class="fgrp full"><label>Contrato (Centro de Custo) *</label>
+        <input id="cc-med-s" placeholder="🔍 Filtrar por centro de custo..." oninput="ccFilter(this,'cc-med-list','${d.ID_CONTRATO||''}')"
+          value="${d.CENTRO_CUSTO||''}" style="padding:7px 9px;border:1px solid var(--g300);border-radius:6px;font-size:13px;width:100%;margin-bottom:4px">
+        <select id="cc-med-list" name="_dummy" size="4" style="width:100%;border:1px solid var(--g300);border-radius:6px;font-size:12px"
+          onchange="ccPick(this,'cc-med-s','med-id','med-cc')">
+          ${cs.map(c=>`<option value="${c.ID_CONTRATO}" data-cc="${c.CENTRO_CUSTO||c.NOME_OBRA}" ${d.ID_CONTRATO===c.ID_CONTRATO?'selected':''}>${c.CENTRO_CUSTO||c.NOME_OBRA}</option>`).join('')}
+        </select>
+      </div>
+      <input type="hidden" name="ID_CONTRATO" id="med-id" value="${d.ID_CONTRATO||''}">
+      <input type="hidden" name="CENTRO_CUSTO" id="med-cc" value="${d.CENTRO_CUSTO||''}">
+      <div class="fgrp"><label>Número BM *</label><input name="NUMERO_BM" value="${d.NUMERO_BM||''}" required></div>
+      <div class="fgrp"><label>Data Emissão</label><input name="DATA_EMISSAO" type="date" value="${d.DATA_EMISSAO||''}"></div>
+      <div class="fgrp"><label>Período Início</label><input name="PERIODO_INICIO" id="med-pi" type="date" value="${d.PERIODO_INICIO||''}"></div>
+      <div class="fgrp"><label>Período Fim</label><input name="PERIODO_FIM" id="med-pf" type="date" value="${d.PERIODO_FIM||''}" onchange="validMedDates()"></div>
+      <div class="fgrp"><label>Valor Medido Bruto (R$) *</label><input name="VALOR_MEDIDO_BRUTO" type="number" step="0.01" value="${d.VALOR_MEDIDO_BRUTO||''}" required></div>
+      <div class="fgrp full"><label>URL Documento</label><input name="DOCUMENTO_URL" type="url" value="${d.DOCUMENTO_URL||''}"></div>
+      <div class="fgrp full"><label>Observações</label><textarea name="OBSERVACOES">${d.OBSERVACOES||''}</textarea></div>
+      ${d.ID_MEDICAO?`<input type="hidden" name="ID_MEDICAO" value="${d.ID_MEDICAO}">`:''}
+    </form>
+    <div class="al al-i" style="margin-top:8px">💡 Após salvar, use o botão ⚡ para adicionar eventos financeiros (retenções, descontos, reembolsos etc.)</div>`,
+  async()=>{
+    const obj=fdata('fmed');
+    obj.ID_CONTRATO=document.getElementById('med-id')?.value||obj.ID_CONTRATO||'';
+    obj.CENTRO_CUSTO=document.getElementById('med-cc')?.value||obj.CENTRO_CUSTO||'';
+    if(!obj.ID_CONTRATO) return toast('Selecione um contrato!','err');
+    if(obj.PERIODO_INICIO&&obj.PERIODO_FIM&&obj.PERIODO_FIM<obj.PERIODO_INICIO) return toast('Período fim não pode ser anterior ao início!','err');
+    load(true); try{ await api('saveMedicao',obj); closeModal(); toast('Medição salva!'); pages.medicoes(); }
+    catch(e){ toast(e.message,'err'); } finally{ load(false); }
+  });
+}
+function validMedDates(){ const pi=document.getElementById('med-pi')?.value; const pf=document.getElementById('med-pf')?.value; if(pi&&pf&&pf<pi) toast('Período fim não pode ser anterior ao início!','warn'); }
+
+// ─── Filtro de Centro de Custo ─────────────────────────────
+function ccFilter(inp, listId, preselId){
+  const q=(inp.value||'').toLowerCase();
+  const sel=document.getElementById(listId);
+  if(!sel) return;
+  const opts=sel.querySelectorAll('option');
+  opts.forEach(o=>{ o.style.display=o.text.toLowerCase().includes(q)?'':'none'; });
+}
+function ccPick(sel, inputId, idField, ccField){
+  const o=sel.selectedOptions[0];
+  if(!o) return;
+  const inp=document.getElementById(inputId);
+  const idf=document.getElementById(idField);
+  const ccf=document.getElementById(ccField);
+  if(inp) inp.value=o.dataset.cc||o.text;
+  if(idf) idf.value=o.value;
+  if(ccf) ccf.value=o.dataset.cc||o.text;
+}
+
+// ============================================================
+// NOTAS FISCAIS
+// ============================================================
+pages.notas=async function(){
+  load(true); try{
+    const [ns,cs]=await Promise.all([api('getNotasFiscais',{}),api('getContratos',{})]);
+    const cm={}; cs.forEach(c=>cm[c.ID_CONTRATO]=c.NOME_OBRA);
+    document.getElementById('cnt').innerHTML=`
+    <div class="tbar"><div class="tr"><button class="btn bp" onclick="openNFModal()">➕ Nova Nota Fiscal</button></div></div>
+    <div class="card"><div class="tw"><table>
+      <thead><tr><th>NF</th><th>Obra</th><th>Emissão</th><th>Vcto</th><th class="tr2">Bruto</th><th class="tr2">Deduções</th><th class="tr2">A Receber</th><th>Status</th><th></th></tr></thead>
+      <tbody>${ns.map(n=>`<tr>
+        <td class="mono">${n.NUMERO_NF}</td>
+        <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cm[n.ID_CONTRATO]||'—'}</td>
+        <td>${fmt.d(n.DATA_EMISSAO)}</td><td>${fmt.d(n.DATA_VENCIMENTO)}</td>
+        <td class="tr2">${fmt.$(n.VALOR_BRUTO_NF)}</td>
+        <td class="tr2 td">${fmt.$(n.TOTAL_DEDUCOES_LEGAIS)}</td>
+        <td class="tr2 fb ts">${fmt.$(n.VALOR_A_RECEBER)}</td>
+        <td>${sb(n.STATUS_NF)}</td>
+        <td style="white-space:nowrap">
+          <button class="bi" title="Eventos Financeiros" onclick="openEventosNFModal('${n.ID_NF}','NF ${n.NUMERO_NF}','${n.ID_CONTRATO}','${(n.CENTRO_CUSTO||'').replace(/'/g,"\\'")}',${fmt.n(n.VALOR_LIQUIDO_NF)},pages.notas)">⚡</button>
+          <button class="bi" onclick='openNFModal(${JSON.stringify(n)})'>✏️</button>
+          <button class="bi" onclick="openRecebModal('${n.ID_NF}','${n.NUMERO_NF}')">💳</button>
+          <button class="bi" onclick="delRow('NOTAS_FISCAIS','${n.ID_NF}',pages.notas)">🗑️</button>
+        </td>
+      </tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:#999;padding:16px">Nenhuma NF</td></tr>'}</tbody>
+    </table></div></div>`;
+  }catch(e){ document.getElementById('cnt').innerHTML=`<div class="al al-d">❌ ${e.message}</div>`; }
+  finally{ load(false); }
+};
+
+async function openNFModal(d={}){
+  const [csList, cfg2] = await Promise.all([
+    api('getContratosPorCC',{}),
+    S.config && Object.keys(S.config).length ? Promise.resolve(S.config) : api('getConfig',{})
+  ]);
+  const cfg = cfg2; S.config=cfg;
+  let meds=[];
+  if(d.ID_CONTRATO) meds=await api('getMedicoes',{idContrato:d.ID_CONTRATO});
+  modal(`${d.ID_NF?'Editar':'Nova'} Nota Fiscal`,`
+    <form id="fnf" class="fg">
+      <div class="fsec">🧾 Identificação</div>
+      <div class="fgrp full"><label>Contrato (Centro de Custo) *</label>
+        <input id="cc-nf-s" placeholder="🔍 Filtrar por centro de custo..." oninput="ccFilter(this,'cc-nf-list','')"
+          value="${d.CENTRO_CUSTO||''}" style="padding:7px 9px;border:1px solid var(--g300);border-radius:6px;font-size:13px;width:100%;margin-bottom:4px">
+        <select id="cc-nf-list" name="_dummy2" size="4" style="width:100%;border:1px solid var(--g300);border-radius:6px;font-size:12px"
+          onchange="ccPick(this,'cc-nf-s','nf-id','nf-cc');nfLoadMeds(document.getElementById('nf-id').value)">
+          ${csList.map(c=>`<option value="${c.ID_CONTRATO}" data-cc="${c.CENTRO_CUSTO||c.NOME_OBRA}" ${d.ID_CONTRATO===c.ID_CONTRATO?'selected':''}>${c.CENTRO_CUSTO||c.NOME_OBRA}</option>`).join('')}
+        </select>
+      </div>
+      <input type="hidden" name="ID_CONTRATO" id="nf-id" value="${d.ID_CONTRATO||''}">
+      <input type="hidden" name="CENTRO_CUSTO" id="nf-cc" value="${d.CENTRO_CUSTO||''}">
+      <div class="fgrp"><label>BM Vinculado</label>
+        <select id="nf-bm" onchange="nfFillFromBM(this)">
+          <option value="">— Opcional —</option>
+          ${meds.map(m=>`<option value="${m.ID_MEDICAO}" data-val="${m.VALOR_LIQUIDO_MEDICAO}">BM ${m.NUMERO_BM} — ${fmt.$(m.VALOR_LIQUIDO_MEDICAO)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="fgrp"><label>Número NF *</label><input name="NUMERO_NF" value="${d.NUMERO_NF||''}" required></div>
+      <div class="fgrp"><label>Data Emissão</label><input name="DATA_EMISSAO" type="date" value="${d.DATA_EMISSAO||''}"></div>
+      <div class="fgrp"><label>Data Vencimento</label><input name="DATA_VENCIMENTO" type="date" value="${d.DATA_VENCIMENTO||''}"></div>
+      <div class="fgrp"><label>Valor Bruto (R$) *</label><input name="VALOR_BRUTO_NF" id="nf-bruto" type="number" step="0.01" value="${d.VALOR_BRUTO_NF||''}" required></div>
+      <div style="grid-column:1/-1"><div class="al al-i" style="font-size:12px;margin:0">💡 Use o botão ⚡ após salvar para adicionar retenções, descontos de adiantamento, juros, etc.</div></div>
+      <div class="fsec">💼 Deduções Legais (impostos)</div>
+      <div style="grid-column:1/-1;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:6px 10px">
+        <div style="font-size:11px;font-weight:700;color:var(--g600)">Imposto</div>
+        <div style="font-size:11px;font-weight:700;color:var(--g600)">Retido?</div>
+        <div style="font-size:11px;font-weight:700;color:var(--g600)">Alíquota %</div>
+        <div style="font-size:11px;font-weight:700;color:var(--g600)">Valor R$ (auto)</div>
+        ${[['ISS','ISS_RETIDO_FONTE','ISS_ALIQUOTA','VALOR_ISS',cfg.ALIQUOTA_ISS_PADRAO||2],
+           ['INSS','INSS_RETIDO','INSS_ALIQUOTA','VALOR_INSS',cfg.ALIQUOTA_INSS||3.5],
+           ['IRPJ','IRPJ_RETIDO','IRPJ_ALIQUOTA','VALOR_IRPJ',cfg.ALIQUOTA_IRPJ||1.5],
+           ['CSLL','CSLL_RETIDO','CSLL_ALIQUOTA','VALOR_CSLL',cfg.ALIQUOTA_CSLL||1],
+           ['COFINS','COFINS_RETIDO','COFINS_ALIQUOTA','VALOR_COFINS',cfg.ALIQUOTA_COFINS||3],
+           ['PIS/PASEP','PIS_PASEP_RETIDO','PIS_PASEP_ALIQUOTA','VALOR_PIS_PASEP',cfg.ALIQUOTA_PIS||0.65],
+        ].map(([nm,ret,aliq,val,def])=>`
+          <div style="font-size:13px;padding:5px 0;border-bottom:1px solid var(--g100);display:flex;align-items:center">${nm}</div>
+          <select name="${ret}" style="padding:5px;border:1px solid var(--g300);border-radius:5px;font-size:12px">
+            <option value="S" ${d[ret]!=='N'?'selected':''}>Sim</option>
+            <option value="N" ${d[ret]==='N'?'selected':''}>Não</option>
+          </select>
+          <input name="${aliq}" type="number" step="0.01" value="${d[aliq]||def}" style="padding:5px;border:1px solid var(--g300);border-radius:5px;font-size:12px">
+          <input name="${val}" type="number" step="0.01" value="${d[val]||''}" placeholder="Auto" style="padding:5px;border:1px solid var(--g300);border-radius:5px;font-size:12px">
+        `).join('')}
+      </div>
+      <div class="fsec">🔒 Retenção Pós-Faturamento</div>
+      <div class="fgrp"><label>Valor Retido (R$)</label><input name="RETENCAO_POS_FATURAMENTO" type="number" step="0.01" value="${d.RETENCAO_POS_FATURAMENTO||0}"></div>
+      <div class="fgrp"><label>Valor já Devolvido (R$)</label><input name="RETENCAO_DEVOLVIDA" type="number" step="0.01" value="${d.RETENCAO_DEVOLVIDA||0}"></div>
+      <div class="fgrp"><label>Status</label>
+        <select name="STATUS_NF">${['Pendente','Recebido Parcialmente','Recebido','Vencido','Cancelada'].map(o=>`<option ${d.STATUS_NF===o?'selected':''}>${o}</option>`).join('')}</select>
+      </div>
+      <div class="fgrp full"><label>URL Documento</label><input name="DOCUMENTO_URL" type="url" value="${d.DOCUMENTO_URL||''}"></div>
+      <div class="fgrp full"><label>Observações</label><textarea name="OBSERVACOES">${d.OBSERVACOES||''}</textarea></div>
+      ${d.ID_NF?`<input type="hidden" name="ID_NF" value="${d.ID_NF}">`:''}
+    </form>`, async()=>{
+    const obj=fdata('fnf');
+    obj.ID_CONTRATO = document.getElementById('nf-id')?.value || obj.ID_CONTRATO || '';
+    obj.CENTRO_CUSTO= document.getElementById('nf-cc')?.value || obj.CENTRO_CUSTO || '';
+    if(!obj.ID_CONTRATO) return toast('Selecione um contrato!','err');
+    load(true); try{
+      const nfId=await api('saveNotaFiscal',obj);
+      const bmSel=document.getElementById('nf-bm');
+      if(bmSel?.value) await api('saveRateio',{ID_NF:nfId,ID_MEDICAO:bmSel.value,ID_CONTRATO:obj.ID_CONTRATO,CENTRO_CUSTO:obj.CENTRO_CUSTO,VALOR_RATEADO:fmt.n(obj.VALOR_BRUTO_NF),PERCENTUAL_RATEIO:100});
+      closeModal(); toast('NF salva! Use ⚡ para adicionar retenções e descontos.'); pages.notas();
+    }catch(e){ toast(e.message,'err'); } finally{ load(false); }
+  },'molg');
+}
+async function nfLoadMeds(id){
+  const sel=document.getElementById('nf-bm');
+  if(!sel||!id) return; sel.innerHTML='<option>...</option>';
+  try{
+    const ms=await api('getMedicoes',{idContrato:id});
+    sel.innerHTML='<option value="">— Opcional —</option>'+ms.map(m=>`<option value="${m.ID_MEDICAO}" data-val="${m.VALOR_LIQUIDO_MEDICAO}">BM ${m.NUMERO_BM} — ${fmt.$(m.VALOR_LIQUIDO_MEDICAO)} (${m.STATUS_MEDICAO})</option>`).join('');
+  }catch(e){ sel.innerHTML='<option>Erro</option>'; }
+}
+function nfFillFromBM(sel){ const v=sel.selectedOptions[0]?.dataset?.val; const inp=document.getElementById('nf-bruto'); if(v&&inp&&!inp.value) inp.value=parseFloat(v).toFixed(2); }
+
+// ============================================================
+// RECEBIMENTOS
+// ============================================================
+pages.recebimentos=async function(){
+  load(true); try{
+    const [rs,ns,cs]=await Promise.all([api('getRecebimentos',{}),api('getNotasFiscais',{}),api('getContratos',{})]);
+    const nm={}; ns.forEach(n=>nm[n.ID_NF]=n.NUMERO_NF);
+    const cm={}; cs.forEach(c=>cm[c.ID_CONTRATO]=c.NOME_OBRA);
+    document.getElementById('cnt').innerHTML=`
+    <div class="tbar"><div class="tr"><button class="btn bp" onclick="openRecebModal()">➕ Novo Recebimento</button></div></div>
+    <div class="card"><div class="tw"><table>
+      <thead><tr><th>Obra</th><th>NF</th><th>Data</th><th class="tr2">Valor</th><th>Forma</th><th>Banco</th><th></th></tr></thead>
+      <tbody>${rs.map(r=>`<tr>
+        <td>${cm[r.ID_CONTRATO]||'—'}</td><td class="mono">${nm[r.ID_NF]||'—'}</td>
+        <td>${fmt.d(r.DATA_RECEBIMENTO)}</td>
+        <td class="tr2 fb ts">${fmt.$(r.VALOR_RECEBIDO)}</td>
+        <td>${r.FORMA_PAGAMENTO||'—'}</td><td>${r.BANCO||'—'}</td>
+        <td><button class="bi" onclick="delRow('RECEBIMENTOS','${r.ID_RECEBIMENTO}',pages.recebimentos)">🗑️</button></td>
+      </tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:#999;padding:16px">Nenhum</td></tr>'}</tbody>
+    </table></div></div>`;
+  }catch(e){ document.getElementById('cnt').innerHTML=`<div class="al al-d">❌ ${e.message}</div>`; }
+  finally{ load(false); }
+};
+
+async function openRecebModal(idNF='',numNF=''){
+  const [cs,ns]=await Promise.all([api('getContratos',{}),api('getNotasFiscais',{})]);
+  modal('Registrar Recebimento',`
+    <form id="frec" class="fg c2">
+      <div class="fgrp full"><label>Nota Fiscal *</label>
+        <select name="ID_NF" id="rec-nf" onchange="recFillCtr(this)">
+          <option value="">Selecione...</option>
+          ${ns.map(n=>`<option value="${n.ID_NF}" data-ctr="${n.ID_CONTRATO}" data-cc="${n.CENTRO_CUSTO||''}" ${n.ID_NF===idNF?'selected':''}>${n.NUMERO_NF} — ${cs.find(c=>c.ID_CONTRATO===n.ID_CONTRATO)?.NOME_OBRA||''} — A Rec: ${fmt.$(n.VALOR_A_RECEBER)}</option>`).join('')}
+        </select>
+      </div>
+      <input type="hidden" name="ID_CONTRATO" id="rec-ctr" value="">
+      <input type="hidden" name="CENTRO_CUSTO" id="rec-cc2" value="">
+      <div class="fgrp"><label>Data *</label><input name="DATA_RECEBIMENTO" type="date" value="${new Date().toISOString().split('T')[0]}" required></div>
+      <div class="fgrp"><label>Valor Recebido (R$) *</label><input name="VALOR_RECEBIDO" type="number" step="0.01" required></div>
+      <div class="fgrp"><label>Forma</label>
+        <select name="FORMA_PAGAMENTO">${['TED','PIX','Boleto','Depósito','Cheque','Outro'].map(o=>`<option>${o}</option>`).join('')}</select>
+      </div>
+      <div class="fgrp"><label>Banco</label><input name="BANCO" placeholder="Ex: Bradesco"></div>
+      <div class="fgrp full"><label>Observações</label><textarea name="OBSERVACOES"></textarea></div>
+    </form>`, async()=>{
+    const obj=fdata('frec');
+    const nf=ns.find(n=>n.ID_NF===obj.ID_NF);
+    if(nf){ obj.ID_CONTRATO=nf.ID_CONTRATO; obj.CENTRO_CUSTO=nf.CENTRO_CUSTO||''; }
+    load(true); try{ await api('saveRecebimento',obj); closeModal(); toast('Recebimento registrado!'); pages.recebimentos(); }
+    catch(e){ toast(e.message,'err'); } finally{ load(false); }
+  },'momd');
+}
+function recFillCtr(sel){ const o=sel.selectedOptions[0]; const c=document.getElementById('rec-ctr'); if(c&&o) c.value=o.dataset.ctr||''; }
+
+// ============================================================
+// ADIANTAMENTOS
+// ============================================================
+pages.adiantamentos=async function(){
+  load(true); try{
+    const [as,cs]=await Promise.all([api('getAdiantamentos',{}),api('getContratos',{})]);
+    const cm={}; cs.forEach(c=>cm[c.ID_CONTRATO]=c.NOME_OBRA);
+    document.getElementById('cnt').innerHTML=`
+    <div class="tbar"><div class="tr"><button class="btn bp" onclick="openAdiModal()">➕ Novo</button></div></div>
+    <div class="card"><div class="tw"><table>
+      <thead><tr><th>Obra</th><th>Tipo</th><th>Descrição</th><th>Data</th><th class="tr2">Recebido</th><th class="tr2">Amortizado</th><th class="tr2">Falta Amort.</th><th>Status</th><th></th></tr></thead>
+      <tbody>${as.map(a=>`<tr>
+        <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cm[a.ID_CONTRATO]||'—'}</td>
+        <td>${a.TIPO}</td><td>${a.DESCRICAO||'—'}</td><td>${fmt.d(a.DATA_RECEBIMENTO)}</td>
+        <td class="tr2">${fmt.$(a.VALOR_RECEBIDO)}</td>
+        <td class="tr2 ts">${fmt.$(a.VALOR_AMORTIZADO)}</td>
+        <td class="tr2 fb td">${fmt.$(a.VALOR_A_AMORTIZAR)}</td>
+        <td>${sb(a.STATUS)}</td>
+        <td><button class="bi" onclick='openAdiModal(${JSON.stringify(a)})'>✏️</button>
+            <button class="bi" onclick="delRow('ADIANTAMENTOS','${a.ID_ADIANTAMENTO}',pages.adiantamentos)">🗑️</button></td>
+      </tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:#999;padding:16px">Nenhum</td></tr>'}</tbody>
+    </table></div></div>`;
+  }catch(e){ document.getElementById('cnt').innerHTML=`<div class="al al-d">❌ ${e.message}</div>`; }
+  finally{ load(false); }
+};
+async function openAdiModal(d={}){
+  const cs=S.contratos.length?S.contratos:await api('getContratos',{});
+  modal(`${d.ID_ADIANTAMENTO?'Editar':'Novo'} Adiantamento`,`
+    <form id="fadi" class="fg">
+      <div class="fgrp full"><label>Contrato *</label>
+        <select name="ID_CONTRATO">${cs.map(c=>`<option value="${c.ID_CONTRATO}" ${d.ID_CONTRATO===c.ID_CONTRATO?'selected':''}>${c.NOME_OBRA}</option>`).join('')}</select>
+      </div>
+      <input type="hidden" name="CENTRO_CUSTO" value="${d.CENTRO_CUSTO||''}">
+      <div class="fgrp"><label>Tipo</label>
+        <select name="TIPO"><option value="COM_NF" ${d.TIPO==='COM_NF'?'selected':''}>Com NF</option><option value="SEM_NF" ${d.TIPO==='SEM_NF'?'selected':''}>Sem NF</option></select>
+      </div>
+      <div class="fgrp"><label>Data Recebimento</label><input name="DATA_RECEBIMENTO" type="date" value="${d.DATA_RECEBIMENTO||''}"></div>
+      <div class="fgrp full"><label>Descrição</label><input name="DESCRICAO" value="${d.DESCRICAO||''}"></div>
+      <div class="fgrp"><label>Valor Recebido (R$) *</label><input name="VALOR_RECEBIDO" type="number" step="0.01" value="${d.VALOR_RECEBIDO||''}" required></div>
+      <div class="fgrp"><label>Valor Amortizado (R$)</label><input name="VALOR_AMORTIZADO" type="number" step="0.01" value="${d.VALOR_AMORTIZADO||0}"></div>
+      <div class="fgrp full"><label>Observações</label><textarea name="OBSERVACOES">${d.OBSERVACOES||''}</textarea></div>
+      ${d.ID_ADIANTAMENTO?`<input type="hidden" name="ID_ADIANTAMENTO" value="${d.ID_ADIANTAMENTO}">`:''}
+    </form>`, async()=>{
+    const obj=fdata('fadi'); load(true);
+    try{ await api('saveAdiantamento',obj); closeModal(); toast('Salvo!'); pages.adiantamentos(); }
+    catch(e){ toast(e.message,'err'); } finally{ load(false); }
+  });
+}
+
+// ============================================================
+// RETENÇÕES
+// ============================================================
+pages.retencoes=async function(){
+  load(true); try{
+    const [rs,cs]=await Promise.all([api('getRetencoes',{}),api('getContratos',{})]);
+    const cm={}; cs.forEach(c=>cm[c.ID_CONTRATO]=c.NOME_OBRA);
+    document.getElementById('cnt').innerHTML=`
+    <div class="card">
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <span class="tag tag-pre" style="font-size:12px;padding:4px 10px">🔴 Pré-Faturamento: criado ao adicionar evento de Retenção na Medição (⚡)</span>
+        <span class="tag tag-pos" style="font-size:12px;padding:4px 10px">🔵 Pós-Faturamento: criado ao informar Retenção Pós na Nota Fiscal</span>
+      </div>
+      <div class="tw"><table>
+        <thead><tr><th>Obra</th><th>Tipo</th><th>Subtipo</th><th>Referência</th><th>Data</th><th class="tr2">Retido</th><th class="tr2">Devolvido</th><th class="tr2">A Devolver</th><th>Status</th><th></th></tr></thead>
+        <tbody>${rs.map(r=>`<tr>
+          <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cm[r.ID_CONTRATO]||'—'}</td>
+          <td><span class="tag ${r.TIPO==='PRE_FATURAMENTO'?'tag-pre':'tag-pos'}">${r.TIPO==='PRE_FATURAMENTO'?'Pré NF':'Pós NF'}</span></td>
+          <td>${r.SUBTIPO||'—'}</td>
+          <td>${r.NUMERO_REFERENCIA||'—'}</td>
+          <td>${fmt.d(r.DATA_RETENCAO)}</td>
+          <td class="tr2">${fmt.$(r.VALOR_RETIDO)}</td>
+          <td class="tr2 ts">${fmt.$(r.VALOR_DEVOLVIDO)}</td>
+          <td class="tr2 fb ts">${fmt.$(r.VALOR_A_DEVOLVER)}</td>
+          <td>${sb(r.STATUS)}</td>
+          <td><button class="bi" onclick='openRetModal(${JSON.stringify(r)})'>✏️</button></td>
+        </tr>`).join('')||'<tr><td colspan="10" style="text-align:center;color:#999;padding:16px">Nenhuma retenção</td></tr>'}</tbody>
+      </table></div>
+    </div>`;
+  }catch(e){ document.getElementById('cnt').innerHTML=`<div class="al al-d">❌ ${e.message}</div>`; }
+  finally{ load(false); }
+};
+function openRetModal(d={}){
+  modal('Atualizar Retenção',`
+    <form id="fret" class="fg c2">
+      <div class="fgrp"><label>Valor Retido (R$)</label><input name="VALOR_RETIDO" type="number" step="0.01" value="${d.VALOR_RETIDO||0}"></div>
+      <div class="fgrp"><label>Juros?</label><select name="JUROS_SOBRE_RETENCAO"><option value="N">Não</option><option value="S" ${d.JUROS_SOBRE_RETENCAO==='S'?'selected':''}>Sim</option></select></div>
+      <div class="fgrp"><label>Valor Juros (R$)</label><input name="VALOR_JUROS_RETENCAO" type="number" step="0.01" value="${d.VALOR_JUROS_RETENCAO||0}"></div>
+      <div class="fgrp"><label>Valor Devolvido (R$)</label><input name="VALOR_DEVOLVIDO" type="number" step="0.01" value="${d.VALOR_DEVOLVIDO||0}"></div>
+      <div class="fgrp"><label>Data Devolução</label><input name="DATA_DEVOLUCAO" type="date" value="${d.DATA_DEVOLUCAO||''}"></div>
+      <div class="fgrp full"><label>Observações</label><textarea name="OBSERVACOES">${d.OBSERVACOES||''}</textarea></div>
+      <input type="hidden" name="ID_RETENCAO" value="${d.ID_RETENCAO}">
+      <input type="hidden" name="ID_CONTRATO" value="${d.ID_CONTRATO}">
+      <input type="hidden" name="CENTRO_CUSTO" value="${d.CENTRO_CUSTO||''}">
+      <input type="hidden" name="TIPO" value="${d.TIPO}">
+      <input type="hidden" name="ID_REFERENCIA" value="${d.ID_REFERENCIA||''}">
+      <input type="hidden" name="NUMERO_REFERENCIA" value="${d.NUMERO_REFERENCIA||''}">
+      <input type="hidden" name="SUBTIPO" value="${d.SUBTIPO||''}">
+      <input type="hidden" name="DATA_RETENCAO" value="${d.DATA_RETENCAO||''}">
+    </form>`, async()=>{
+    const obj=fdata('fret'); load(true);
+    try{ await api('saveRetencao',obj); closeModal(); toast('Atualizado!'); pages.retencoes(); }
+    catch(e){ toast(e.message,'err'); } finally{ load(false); }
+  },'momd');
+}
+
+// ============================================================
+// JUROS E MULTAS
+// ============================================================
+pages.juros=async function(){
+  load(true); try{
+    const [js,cs]=await Promise.all([api('getJurosMultas',{}),api('getContratos',{})]);
+    const cm={}; cs.forEach(c=>cm[c.ID_CONTRATO]=c.NOME_OBRA);
+    document.getElementById('cnt').innerHTML=`
+    <div class="card"><div class="tw"><table>
+      <thead><tr><th>Obra</th><th>NF</th><th>Vcto</th><th>Atraso</th><th class="tr2">Base</th><th class="tr2">Multa</th><th class="tr2">Juros</th><th class="tr2">Total</th><th>Status</th></tr></thead>
+      <tbody>${js.map(j=>`<tr>
+        <td>${cm[j.ID_CONTRATO]||'—'}</td><td class="mono">${j.NUMERO_NF}</td><td>${fmt.d(j.DATA_VENCIMENTO)}</td>
+        <td>${fmt.days(j.DIAS_ATRASO)}</td>
+        <td class="tr2">${fmt.$(j.VALOR_BASE)}</td><td class="tr2">${fmt.$(j.VALOR_MULTA)}</td>
+        <td class="tr2">${fmt.$(j.VALOR_JUROS)}</td>
+        <td class="tr2 fb tw2">${fmt.$(j.TOTAL_ENCARGOS)}</td>
+        <td>${sb(j.STATUS)}</td>
+      </tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:#999;padding:16px">Nenhum encargo</td></tr>'}</tbody>
+    </table></div></div>`;
+  }catch(e){ document.getElementById('cnt').innerHTML=`<div class="al al-d">❌ ${e.message}</div>`; }
+  finally{ load(false); }
+};
+
+// ============================================================
+// OUTROS VALORES
+// ============================================================
+pages.outros=async function(){
+  load(true); try{
+    const [ds,cs]=await Promise.all([api('getOutrosValores',{}),api('getContratos',{})]);
+    const cm={}; cs.forEach(c=>cm[c.ID_CONTRATO]=c.NOME_OBRA);
+    document.getElementById('cnt').innerHTML=`
+    <div class="tbar"><div class="tr"><button class="btn bp" onclick="openOutroModal()">➕ Novo</button></div></div>
+    <div class="card"><div class="tw"><table>
+      <thead><tr><th>Obra</th><th>Tipo</th><th>Categoria</th><th>Descrição</th><th>Vcto</th><th class="tr2">Líquido</th><th class="tr2">Liquidado</th><th>Status</th><th></th></tr></thead>
+      <tbody>${ds.map(o=>`<tr>
+        <td>${cm[o.ID_CONTRATO]||'—'}</td>
+        <td>${sb(o.TIPO==='A_RECEBER'?'A Receber':'A Pagar')}</td>
+        <td>${o.CATEGORIA||'—'}</td><td>${o.DESCRICAO||'—'}</td>
+        <td>${fmt.d(o.DATA_VENCIMENTO)}</td>
+        <td class="tr2 fb">${fmt.$(o.VALOR_LIQUIDO)}</td>
+        <td class="tr2 ts">${fmt.$(o.VALOR_LIQUIDADO)}</td>
+        <td>${sb(o.STATUS)}</td>
+        <td><button class="bi" onclick='openOutroModal(${JSON.stringify(o)})'>✏️</button>
+            <button class="bi" onclick="delRow('OUTROS_VALORES','${o.ID_OUTRO}',pages.outros)">🗑️</button></td>
+      </tr>`).join('')||'<tr><td colspan="9" style="text-align:center;color:#999;padding:16px">Nenhum</td></tr>'}</tbody>
+    </table></div></div>`;
+  }catch(e){ document.getElementById('cnt').innerHTML=`<div class="al al-d">❌ ${e.message}</div>`; }
+  finally{ load(false); }
+};
+async function openOutroModal(d={}){
+  const cs=S.contratos.length?S.contratos:await api('getContratos',{});
+  modal(`${d.ID_OUTRO?'Editar':'Novo'} Valor`,`
+    <form id="fout" class="fg">
+      <div class="fgrp full"><label>Contrato *</label>
+        <select name="ID_CONTRATO">${cs.map(c=>`<option value="${c.ID_CONTRATO}" ${d.ID_CONTRATO===c.ID_CONTRATO?'selected':''}>${c.NOME_OBRA}</option>`).join('')}</select>
+      </div>
+      <input type="hidden" name="CENTRO_CUSTO" value="${d.CENTRO_CUSTO||''}">
+      <div class="fgrp"><label>Tipo</label>
+        <select name="TIPO"><option value="A_RECEBER" ${d.TIPO==='A_RECEBER'?'selected':''}>A Receber</option><option value="A_PAGAR" ${d.TIPO==='A_PAGAR'?'selected':''}>A Pagar</option></select>
+      </div>
+      <div class="fgrp"><label>Categoria</label>
+        <select name="CATEGORIA">${['Materiais','Reembolso','Indenização','Multa Contratual','Aluguel Equipamento','Outro'].map(o=>`<option ${d.CATEGORIA===o?'selected':''}>${o}</option>`).join('')}</select>
+      </div>
+      <div class="fgrp full"><label>Descrição</label><input name="DESCRICAO" value="${d.DESCRICAO||''}"></div>
+      <div class="fgrp"><label>Data Lançamento</label><input name="DATA_LANCAMENTO" type="date" value="${d.DATA_LANCAMENTO||''}"></div>
+      <div class="fgrp"><label>Data Vencimento</label><input name="DATA_VENCIMENTO" type="date" value="${d.DATA_VENCIMENTO||''}"></div>
+      <div class="fgrp"><label>Valor Bruto (R$)</label><input name="VALOR_BRUTO" type="number" step="0.01" value="${d.VALOR_BRUTO||''}"></div>
+      <div class="fgrp"><label>Deduções (R$)</label><input name="DEDUCOES" type="number" step="0.01" value="${d.DEDUCOES||0}"></div>
+      <div class="fgrp"><label>Valor Liquidado (R$)</label><input name="VALOR_LIQUIDADO" type="number" step="0.01" value="${d.VALOR_LIQUIDADO||0}"></div>
+      <div class="fgrp"><label>Status</label>
+        <select name="STATUS">${['Pendente','Liquidado Parcialmente','Liquidado'].map(o=>`<option ${d.STATUS===o?'selected':''}>${o}</option>`).join('')}</select>
+      </div>
+      <div class="fgrp full"><label>Observações</label><textarea name="OBSERVACOES">${d.OBSERVACOES||''}</textarea></div>
+      ${d.ID_OUTRO?`<input type="hidden" name="ID_OUTRO" value="${d.ID_OUTRO}">`:''}
+    </form>`, async()=>{
+    const obj=fdata('fout'); load(true);
+    try{ await api('saveOutroValor',obj); closeModal(); toast('Salvo!'); pages.outros(); }
+    catch(e){ toast(e.message,'err'); } finally{ load(false); }
+  });
+}
+
+// ============================================================
+// DOCUMENTOS
+// ============================================================
+pages.documentos=async function(){
+  load(true); try{
+    const [ds,cs]=await Promise.all([api('getDocumentos',{}),api('getContratos',{})]);
+    const cm={}; cs.forEach(c=>cm[c.ID_CONTRATO]=c.NOME_OBRA);
+    document.getElementById('cnt').innerHTML=`
+    <div class="tbar"><div class="tr"><button class="btn bp" onclick="openDocModal()">➕ Novo</button></div></div>
+    <div class="card"><div class="tw"><table>
+      <thead><tr><th>Obra</th><th>Tipo</th><th>Número</th><th>Descrição</th><th>Emissão</th><th>Validade</th><th>Link</th><th></th></tr></thead>
+      <tbody>${ds.map(d=>`<tr>
+        <td>${cm[d.ID_CONTRATO]||'—'}</td><td>${d.TIPO_DOCUMENTO}</td>
+        <td>${d.NUMERO_DOCUMENTO||'—'}</td><td>${d.DESCRICAO||'—'}</td>
+        <td>${fmt.d(d.DATA_EMISSAO)}</td><td>${fmt.d(d.DATA_VALIDADE)}</td>
+        <td>${d.URL_ARQUIVO?`<a href="${d.URL_ARQUIVO}" target="_blank" style="color:var(--p)">🔗 Abrir</a>`:'—'}</td>
+        <td><button class="bi" onclick='openDocModal(${JSON.stringify(d)})'>✏️</button>
+            <button class="bi" onclick="delRow('DOCUMENTOS','${d.ID_DOCUMENTO}',pages.documentos)">🗑️</button></td>
+      </tr>`).join('')||'<tr><td colspan="8" style="text-align:center;color:#999;padding:16px">Nenhum</td></tr>'}</tbody>
+    </table></div></div>`;
+  }catch(e){ document.getElementById('cnt').innerHTML=`<div class="al al-d">❌ ${e.message}</div>`; }
+  finally{ load(false); }
+};
+async function openDocModal(d={}){
+  const cs=S.contratos.length?S.contratos:await api('getContratos',{});
+  modal(`${d.ID_DOCUMENTO?'Editar':'Novo'} Documento`,`
+    <form id="fdoc" class="fg">
+      <div class="fgrp full"><label>Contrato *</label>
+        <select name="ID_CONTRATO">${cs.map(c=>`<option value="${c.ID_CONTRATO}" ${d.ID_CONTRATO===c.ID_CONTRATO?'selected':''}>${c.NOME_OBRA}</option>`).join('')}</select>
+      </div>
+      <input type="hidden" name="CENTRO_CUSTO" value="${d.CENTRO_CUSTO||''}">
+      <div class="fgrp"><label>Tipo</label>
+        <select name="TIPO_DOCUMENTO">${['Proposta','Contrato','Aditivo','Ordem de Serviço','Medição','Nota Fiscal','Procuração','Laudo','Outro'].map(o=>`<option ${d.TIPO_DOCUMENTO===o?'selected':''}>${o}</option>`).join('')}</select>
+      </div>
+      <div class="fgrp"><label>Número / Código</label><input name="NUMERO_DOCUMENTO" value="${d.NUMERO_DOCUMENTO||''}"></div>
+      <div class="fgrp full"><label>Descrição</label><input name="DESCRICAO" value="${d.DESCRICAO||''}"></div>
+      <div class="fgrp"><label>Data Emissão</label><input name="DATA_EMISSAO" type="date" value="${d.DATA_EMISSAO||''}"></div>
+      <div class="fgrp"><label>Data Validade</label><input name="DATA_VALIDADE" type="date" value="${d.DATA_VALIDADE||''}"></div>
+      <div class="fgrp full"><label>URL (Google Drive)</label><input name="URL_ARQUIVO" type="url" value="${d.URL_ARQUIVO||''}"></div>
+      <div class="fgrp full"><label>Observações</label><textarea name="OBSERVACOES">${d.OBSERVACOES||''}</textarea></div>
+      ${d.ID_DOCUMENTO?`<input type="hidden" name="ID_DOCUMENTO" value="${d.ID_DOCUMENTO}">`:''}
+    </form>`, async()=>{
+    const obj=fdata('fdoc'); load(true);
+    try{ await api('saveDocumento',obj); closeModal(); toast('Salvo!'); pages.documentos(); }
+    catch(e){ toast(e.message,'err'); } finally{ load(false); }
+  });
+}
+
+// ============================================================
+// HELPERS GLOBAIS
+// ============================================================
+function fdata(formId){
+  return Object.fromEntries(new FormData(document.getElementById(formId)).entries());
+}
+function updateCtrCC(sel,hiddenId){
+  const o=sel.selectedOptions[0]; const cc=document.getElementById(hiddenId);
+  if(cc&&o) cc.value=o.dataset.cc||o.dataset.cc||'';
+}
+async function delRow(aba,id,afterFn){
+  if(!delOK()) return; load(true);
+  try{ await api(`delete${aba.charAt(0)+aba.slice(1).toLowerCase().replace(/_([a-z])/g,(_,c)=>c.toUpperCase())}`,{id}); toast('Excluído!'); if(afterFn) afterFn(); }
+  catch(e){
+    // fallback genérico
+    try{ await api('router',{action:'_del',nome:aba,id}); toast('Excluído!'); if(afterFn) afterFn(); }
+    catch(e2){ toast(e.message,'err'); }
+  }
+  finally{ load(false); }
+}
+
+// ============================================================
+// CONFIG DA API
+// ============================================================
+function abrirConfigApi(){
+  document.getElementById('input-api-url').value = getApiUrl();
+  document.getElementById('modal-api').style.display='flex';
+}
+function salvarConfigApi(){
+  const url = document.getElementById('input-api-url').value.trim();
+  if(!url){ toast('Cole a URL do Web App do Apps Script','err'); return; }
+  localStorage.setItem('API_URL', url);
+  document.getElementById('modal-api').style.display='none';
+  toast('URL da API salva! Recarregando...','ok');
+  setTimeout(()=>init(), 800);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+async function init(){
+  if(!getApiUrl()){
+    // Sem URL configurada: abre o modal automaticamente
+    setTimeout(abrirConfigApi, 400);
+    nav('dashboard');
+    return;
+  }
+  load(true);
+  try{ S.config=await api('getConfig',{}); document.getElementById('emp-label').textContent=S.config.EMPRESA_CONTRATADA_1||'Conectrom'; }
+  catch(e){ console.warn('Config:',e.message); toast('Erro ao conectar com a API. Verifique a URL em ⚙️ API','err'); }
+  finally{ load(false); }
+  nav('dashboard');
+}
+init();
+</script>
+</body>
+</html>
