@@ -1926,7 +1926,7 @@ async function salvarNovaSenha(){
 // AUTENTICAÇÃO
 // ============================================================
 
-let _authLoginAtual = '';
+// _authLoginAtual salvo em sessionStorage para sobreviver a recarregamentos
 
 function mostrarPainel(id) {
   ['login','cadastro','validar','aguardando','recuperar','redefinir'].forEach(p => {
@@ -1969,7 +1969,7 @@ async function fazerLogin() {
     init();
   } catch(e) {
     if(e.message === 'E-MAIL_NAO_VALIDADO') {
-      _authLoginAtual = login;
+      sessionStorage.setItem('authLogin', login);
       document.getElementById('validar-msg').textContent = 'Digite o código enviado para seu e-mail cadastrado.';
       mostrarPainel('validar');
     } else if(e.message === 'AGUARDANDO_APROVACAO') {
@@ -2023,7 +2023,7 @@ async function fazerCadastro() {
   load(true);
   try {
     const data = await api('cadastrarUsuario', { nome, login, senha, email, telefone: tel }, true);
-    _authLoginAtual = login;
+    sessionStorage.setItem('authLogin', login);
     authMsg(data.mensagem, 'ok');
     setTimeout(() => {
       mostrarPainel('validar');
@@ -2038,7 +2038,7 @@ async function validarEmail() {
   if(!codigo) { authMsg('Digite o código.'); return; }
   load(true);
   try {
-    const data = await api('validarEmail', { login: _authLoginAtual, codigo }, true);
+    const data = await api('validarEmail', { login: sessionStorage.getItem('authLogin')||'', codigo }, true);
     authMsg(data.mensagem, 'ok');
     setTimeout(() => mostrarPainel('aguardando'), 1500);
   } catch(e) { authMsg(e.message); }
@@ -2048,7 +2048,7 @@ async function validarEmail() {
 async function reenviarCodigoValidacao() {
   load(true);
   try {
-    const data = await api('reenviarCodigo', { login: _authLoginAtual }, true);
+    const data = await api('reenviarCodigo', { login: sessionStorage.getItem('authLogin')||'' }, true);
     authMsg(data.mensagem, 'ok');
   } catch(e) { authMsg(e.message); }
   finally { load(false); }
@@ -2057,7 +2057,7 @@ async function reenviarCodigoValidacao() {
 async function solicitarRecuperacao() {
   const login = document.getElementById('rec-login').value.trim();
   if(!login) { authMsg('Informe seu login.'); return; }
-  _authLoginAtual = login;
+  sessionStorage.setItem('authLogin', login);
   load(true);
   try {
     const data = await api('solicitarRecuperacaoSenha', { login }, true);
@@ -2075,7 +2075,7 @@ async function redefinirSenha() {
   if(novaSenha !== novaSenha2) { authMsg('As senhas não coincidem.'); return; }
   load(true);
   try {
-    const data = await api('redefinirSenha', { login: _authLoginAtual, codigo, novaSenha }, true);
+    const data = await api('redefinirSenha', { login: sessionStorage.getItem('authLogin')||'', codigo, novaSenha }, true);
     authMsg(data.mensagem, 'ok');
     setTimeout(() => mostrarPainel('login'), 1500);
   } catch(e) { authMsg(e.message); }
