@@ -1494,8 +1494,23 @@ async function openNFModal(d={}){
     S.config && Object.keys(S.config).length ? Promise.resolve(S.config) : api('getConfig',{})
   ]);
   const cfg = cfg2; S.config=cfg;
-  let meds=[];
-  if(d.ID_CONTRATO) meds=await api('getMedicoes',{idContrato:d.ID_CONTRATO});
+
+  // Carregar dados existentes se edição
+  let meds=[], adis=[], rets=[], rateiosBM=[], vincsAdi=[], vincsRet=[];
+  if(d.ID_CONTRATO){
+    [meds, adis, rets, rateiosBM, vincsAdi, vincsRet] = await Promise.all([
+      api('getMedicoes',{idContrato:d.ID_CONTRATO}),
+      api('getAdiantamentos',{idContrato:d.ID_CONTRATO, tipo:'COM_NF'}),
+      api('getRetencoes',{idContrato:d.ID_CONTRATO}),
+      d.ID_NF ? api('getRateiosBM',{idNF:d.ID_NF}) : Promise.resolve([]),
+      d.ID_NF ? api('getVinculosNFAdi',{idNF:d.ID_NF}) : Promise.resolve([]),
+      d.ID_NF ? api('getVinculosNFRet',{idNF:d.ID_NF}) : Promise.resolve([]),
+    ]);
+  }
+
+  // Tipo de faturamento inicial
+  const tipoFat = d.TIPO_FATURAMENTO || (rateiosBM.length ? 'MEDICAO' : 'MEDICAO');
+
   modal(`${d.ID_NF?'Editar':'Nova'} Nota Fiscal`,`
     <form id="fnf" class="fg">
       <div class="fsec">🧾 Identificação</div>
@@ -1503,23 +1518,97 @@ async function openNFModal(d={}){
         <input id="cc-nf-s" placeholder="🔍 Filtrar por centro de custo..." oninput="ccFilter(this,'cc-nf-list','')"
           value="${d.CENTRO_CUSTO||''}" style="padding:7px 9px;border:1px solid var(--g300);border-radius:6px;font-size:13px;width:100%;margin-bottom:4px">
         <select id="cc-nf-list" name="_dummy2" size="4" style="width:100%;border:1px solid var(--g300);border-radius:6px;font-size:12px"
-          onchange="ccPick(this,'cc-nf-s','nf-id','nf-cc');nfLoadMeds(document.getElementById('nf-id').value)">
+          onchange="ccPick(this,'cc-nf-s','nf-id','nf-cc');nfCarregarVinculos(document.getElementById('nf-id').value)">
           ${csList.map(c=>`<option value="${c.ID_CONTRATO}" data-cc="${c.CENTRO_CUSTO||c.NOME_OBRA}" ${d.ID_CONTRATO===c.ID_CONTRATO?'selected':''}>${c.CENTRO_CUSTO||c.NOME_OBRA}</option>`).join('')}
         </select>
       </div>
       <input type="hidden" name="ID_CONTRATO" id="nf-id" value="${d.ID_CONTRATO||''}">
       <input type="hidden" name="CENTRO_CUSTO" id="nf-cc" value="${d.CENTRO_CUSTO||''}">
-      <div class="fgrp"><label>BM Vinculado</label>
-        <select id="nf-bm" onchange="nfFillFromBM(this)">
-          <option value="">— Opcional —</option>
-          ${meds.map(m=>`<option value="${m.ID_MEDICAO}" data-val="${m.VALOR_LIQUIDO_MEDICAO}">BM ${m.NUMERO_BM} — ${fmt.$(m.VALOR_LIQUIDO_MEDICAO)}</option>`).join('')}
-        </select>
-      </div>
+
       <div class="fgrp"><label>Número NF *</label><input name="NUMERO_NF" value="${d.NUMERO_NF||''}" required></div>
       <div class="fgrp"><label>Data Emissão</label><input name="DATA_EMISSAO" type="date" value="${d.DATA_EMISSAO||''}"></div>
       <div class="fgrp"><label>Data Vencimento</label><input name="DATA_VENCIMENTO" type="date" value="${d.DATA_VENCIMENTO||''}"></div>
       <div class="fgrp"><label>Valor Bruto (R$) *</label><input name="VALOR_BRUTO_NF" id="nf-bruto" type="number" step="0.01" value="${d.VALOR_BRUTO_NF||''}" required></div>
-      <div style="grid-column:1/-1"><div class="al al-i" style="font-size:12px;margin:0">💡 Use o botão ⚡ após salvar para adicionar retenções, descontos de adiantamento, juros, etc.</div></div>
+
+      <div class="fsec">🔗 Tipo de Faturamento e Vínculos</div>
+      <div class="fgrp full"><label>Tipo de Faturamento *</label>
+        <select name="TIPO_FATURAMENTO" id="nf-tipo-fat" onchange="nfToggleTipo(this.value)" required>
+          <option value="MEDICAO"      ${tipoFat==='MEDICAO'?'selected':''}>📋 Medição (BM)</option>
+          <option value="ADIANTAMENTO" ${tipoFat==='ADIANTAMENTO'?'selected':''}>💰 Adiantamento</option>
+          <option value="RETENCAO"     ${tipoFat==='RETENCAO'?'selected':''}>🔒 Devolução de Retenção</option>
+          <option value="OS"           ${tipoFat==='OS'?'selected':''}>📝 Ordem de Serviço</option>
+          <option value="OUTROS"       ${tipoFat==='OUTROS'?'selected':''}>📎 Outros</option>
+        </select>
+      </div>
+      <div class="fgrp full" id="nf-desc-tipo" style="display:${tipoFat==='OS'||tipoFat==='OUTROS'?'':'none'}">
+        <label>Descrição do Tipo</label><input name="DESCRICAO_TIPO" value="${d.DESCRICAO_TIPO||''}" placeholder="Descreva o tipo de faturamento">
+      </div>
+
+      <!-- BMs vinculados -->
+      <div id="nf-sec-bm" style="grid-column:1/-1;display:${tipoFat==='MEDICAO'?'':'none'}">
+        <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:var(--g700)">📋 BMs Vinculados</div>
+        <div id="nf-bms-lista" style="display:flex;flex-direction:column;gap:6px">
+          ${meds.length===0?'<div style="color:#999;font-size:12px">Selecione o contrato acima para carregar os BMs.</div>':
+            meds.map(m=>{
+              const r = rateiosBM.find(r=>r.ID_MEDICAO===m.ID_MEDICAO);
+              return `<label style="display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--g200);border-radius:6px;cursor:pointer;background:${r?'#E8F5E9':''}">
+                <input type="checkbox" class="nf-bm-chk" data-id="${m.ID_MEDICAO}" data-val="${m.VALOR_LIQUIDO_MEDICAO}" ${r?'checked':''}
+                  onchange="nfToggleBM(this)">
+                <span style="flex:1">BM ${m.NUMERO_BM} — <span style="color:#999">${m.STATUS_MEDICAO}</span></span>
+                <span style="font-weight:700">${fmt.$(m.VALOR_LIQUIDO_MEDICAO)}</span>
+                <input type="number" step="0.01" class="nf-bm-val" data-id="${m.ID_MEDICAO}"
+                  value="${r?r.VALOR_RATEADO:m.VALOR_LIQUIDO_MEDICAO}" placeholder="Valor"
+                  style="width:130px;padding:4px 6px;border:1px solid var(--g300);border-radius:5px;font-size:12px;display:${r?'':'none'}"
+                  oninput="nfRecalcBruto()">
+              </label>`;
+            }).join('')
+          }
+        </div>
+      </div>
+
+      <!-- Adiantamentos vinculados -->
+      <div id="nf-sec-adi" style="grid-column:1/-1;display:${tipoFat==='ADIANTAMENTO'?'':'none'}">
+        <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:var(--g700)">💰 Adiantamentos Vinculados</div>
+        <div id="nf-adis-lista">
+          ${adis.length===0?'<div style="color:#999;font-size:12px">Nenhum adiantamento COM NF em aberto neste contrato.</div>':
+            adis.map(a=>{
+              const v = vincsAdi.find(v=>v.ID_ADIANTAMENTO===a.ID_ADIANTAMENTO);
+              return `<label style="display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--g200);border-radius:6px;cursor:pointer;background:${v?'#FFF3E0':''}">
+                <input type="checkbox" class="nf-adi-chk" data-id="${a.ID_ADIANTAMENTO}" data-val="${a.VALOR_RECEBIDO||a.VALOR_A_AMORTIZAR}" ${v?'checked':''}
+                  onchange="nfToggleAdi(this)">
+                <span style="flex:1">${a.DESCRICAO||a.TIPO} — <span style="color:#999">saldo: ${fmt.$(a.VALOR_A_AMORTIZAR)}</span></span>
+                <input type="number" step="0.01" class="nf-adi-val" data-id="${a.ID_ADIANTAMENTO}"
+                  value="${v?v.VALOR_VINCULADO:a.VALOR_A_AMORTIZAR}" placeholder="Valor"
+                  style="width:130px;padding:4px 6px;border:1px solid var(--g300);border-radius:5px;font-size:12px;display:${v?'':'none'}"
+                  oninput="nfRecalcBruto()">
+              </label>`;
+            }).join('')
+          }
+        </div>
+      </div>
+
+      <!-- Retenções vinculadas -->
+      <div id="nf-sec-ret" style="grid-column:1/-1;display:${tipoFat==='RETENCAO'?'':'none'}">
+        <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:var(--g700)">🔒 Retenções a Devolver</div>
+        <div id="nf-rets-lista">
+          ${rets.filter(r=>r.STATUS!=='Devolvido').length===0?'<div style="color:#999;font-size:12px">Nenhuma retenção em aberto neste contrato.</div>':
+            rets.filter(r=>r.STATUS!=='Devolvido').map(r=>{
+              const v = vincsRet.find(v=>v.ID_RETENCAO===r.ID_RETENCAO);
+              return `<label style="display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--g200);border-radius:6px;cursor:pointer;background:${v?'#FCE4EC':''}">
+                <input type="checkbox" class="nf-ret-chk" data-id="${r.ID_RETENCAO}" data-val="${r.VALOR_A_DEVOLVER}" ${v?'checked':''}
+                  onchange="nfToggleRet(this)">
+                <span style="flex:1">${r.NUMERO_REFERENCIA||r.SUBTIPO} — <span style="color:#999">${r.SUBTIPO} / retido: ${fmt.$(r.VALOR_RETIDO)}</span></span>
+                <span style="font-weight:700;color:#880E4F">a devolver: ${fmt.$(r.VALOR_A_DEVOLVER)}</span>
+                <input type="number" step="0.01" class="nf-ret-val" data-id="${r.ID_RETENCAO}"
+                  value="${v?v.VALOR_DEVOLVIDO:r.VALOR_A_DEVOLVER}" placeholder="Valor"
+                  style="width:130px;padding:4px 6px;border:1px solid var(--g300);border-radius:5px;font-size:12px;display:${v?'':'none'}"
+                  oninput="nfRecalcBruto()">
+              </label>`;
+            }).join('')
+          }
+        </div>
+      </div>
+
       <div class="fsec">💼 Deduções Legais (impostos)</div>
       <div style="grid-column:1/-1;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:6px 10px">
         <div style="font-size:11px;font-weight:700;color:var(--g600)">Imposto</div>
@@ -1550,19 +1639,130 @@ async function openNFModal(d={}){
       </div>
       <div class="fgrp full"><label>URL Documento</label><input name="DOCUMENTO_URL" type="url" value="${d.DOCUMENTO_URL||''}"></div>
       <div class="fgrp full"><label>Observações</label><textarea name="OBSERVACOES">${d.OBSERVACOES||''}</textarea></div>
-      ${d.ID_NF?`<input type="hidden" name="ID_NF" value="${d.ID_NF}">`:''}
-    </form>`, async()=>{
+      ${d.ID_NF?`<input type="hidden" name="ID_NF" value="${d.ID_NF}">`:''}`
+    ,async()=>{
     const obj=fdata('fnf');
-    obj.ID_CONTRATO = document.getElementById('nf-id')?.value || obj.ID_CONTRATO || '';
-    obj.CENTRO_CUSTO= document.getElementById('nf-cc')?.value || obj.CENTRO_CUSTO || '';
+    obj.ID_CONTRATO  = document.getElementById('nf-id')?.value || obj.ID_CONTRATO || '';
+    obj.CENTRO_CUSTO = document.getElementById('nf-cc')?.value || obj.CENTRO_CUSTO || '';
     if(!obj.ID_CONTRATO) return toast('Selecione um contrato!','err');
-    load(true); try{
-      const nfId=await api('saveNotaFiscal',obj);
-      const bmSel=document.getElementById('nf-bm');
-      if(bmSel?.value) await api('saveRateio',{ID_NF:nfId,ID_MEDICAO:bmSel.value,ID_CONTRATO:obj.ID_CONTRATO,CENTRO_CUSTO:obj.CENTRO_CUSTO,VALOR_RATEADO:fmt.n(obj.VALOR_BRUTO_NF),PERCENTUAL_RATEIO:100});
-      closeModal(); toast('NF salva! Use ⚡ para adicionar retenções e descontos.'); pages.notas();
+    const tipoFat = obj.TIPO_FATURAMENTO || 'MEDICAO';
+    load(true);
+    try{
+      const nfId = await api('saveNotaFiscal', obj);
+      // Salvar vínculos conforme tipo
+      if(tipoFat==='MEDICAO'){
+        const bms = [...document.querySelectorAll('.nf-bm-chk:checked')].map(chk=>({
+          idMedicao: chk.dataset.id,
+          valorRateado: fmt.n(document.querySelector(`.nf-bm-val[data-id="${chk.dataset.id}"]`)?.value || chk.dataset.val),
+        }));
+        await api('saveRateiosBM',{idNF:nfId, idContrato:obj.ID_CONTRATO, centroCusto:obj.CENTRO_CUSTO, bms});
+      } else if(tipoFat==='ADIANTAMENTO'){
+        const vinculos = [...document.querySelectorAll('.nf-adi-chk:checked')].map(chk=>({
+          idAdiantamento: chk.dataset.id,
+          valorVinculado: fmt.n(document.querySelector(`.nf-adi-val[data-id="${chk.dataset.id}"]`)?.value || chk.dataset.val),
+        }));
+        await api('saveVinculosNFAdi',{idNF:nfId, idContrato:obj.ID_CONTRATO, centroCusto:obj.CENTRO_CUSTO, vinculos});
+      } else if(tipoFat==='RETENCAO'){
+        const vinculos = [...document.querySelectorAll('.nf-ret-chk:checked')].map(chk=>({
+          idRetencao: chk.dataset.id,
+          valorDevolvido: fmt.n(document.querySelector(`.nf-ret-val[data-id="${chk.dataset.id}"]`)?.value || chk.dataset.val),
+        }));
+        await api('saveVinculosNFRet',{idNF:nfId, idContrato:obj.ID_CONTRATO, centroCusto:obj.CENTRO_CUSTO, vinculos});
+      }
+      closeModal();
+      toast('NF salva! Use ⚡ para adicionar eventos financeiros.');
+      pages.notas();
     }catch(e){ toast(e.message,'err'); } finally{ load(false); }
   },'molg');
+}
+
+// Helpers do modal de NF
+function nfToggleTipo(tipo){
+  ['MEDICAO','ADIANTAMENTO','RETENCAO'].forEach(t=>{
+    const el=document.getElementById('nf-sec-'+t.toLowerCase().replace('retencao','ret').replace('adiantamento','adi').replace('medicao','bm'));
+    if(el) el.style.display = t===tipo ? '' : 'none';
+  });
+  const descEl = document.getElementById('nf-desc-tipo');
+  if(descEl) descEl.style.display = (tipo==='OS'||tipo==='OUTROS') ? '' : 'none';
+  nfRecalcBruto();
+}
+function nfToggleBM(chk){
+  const valInp = document.querySelector(`.nf-bm-val[data-id="${chk.dataset.id}"]`);
+  if(valInp) valInp.style.display = chk.checked ? '' : 'none';
+  nfRecalcBruto();
+}
+function nfToggleAdi(chk){
+  const valInp = document.querySelector(`.nf-adi-val[data-id="${chk.dataset.id}"]`);
+  if(valInp) valInp.style.display = chk.checked ? '' : 'none';
+  nfRecalcBruto();
+}
+function nfToggleRet(chk){
+  const valInp = document.querySelector(`.nf-ret-val[data-id="${chk.dataset.id}"]`);
+  if(valInp) valInp.style.display = chk.checked ? '' : 'none';
+  nfRecalcBruto();
+}
+function nfRecalcBruto(){
+  const tipo = document.getElementById('nf-tipo-fat')?.value;
+  let total = 0;
+  if(tipo==='MEDICAO'){
+    document.querySelectorAll('.nf-bm-chk:checked').forEach(chk=>{
+      const v=document.querySelector(`.nf-bm-val[data-id="${chk.dataset.id}"]`);
+      total += fmt.n(v?.value||chk.dataset.val);
+    });
+  } else if(tipo==='ADIANTAMENTO'){
+    document.querySelectorAll('.nf-adi-chk:checked').forEach(chk=>{
+      const v=document.querySelector(`.nf-adi-val[data-id="${chk.dataset.id}"]`);
+      total += fmt.n(v?.value||chk.dataset.val);
+    });
+  } else if(tipo==='RETENCAO'){
+    document.querySelectorAll('.nf-ret-chk:checked').forEach(chk=>{
+      const v=document.querySelector(`.nf-ret-val[data-id="${chk.dataset.id}"]`);
+      total += fmt.n(v?.value||chk.dataset.val);
+    });
+  }
+  if(total > 0){
+    const inp = document.getElementById('nf-bruto');
+    if(inp && !fmt.n(inp.value)) inp.value = total.toFixed(2);
+  }
+}
+async function nfCarregarVinculos(idContrato){
+  if(!idContrato) return;
+  try{
+    const [ms, adis, rets] = await Promise.all([
+      api('getMedicoes',{idContrato}),
+      api('getAdiantamentos',{idContrato, tipo:'COM_NF'}),
+      api('getRetencoes',{idContrato}),
+    ]);
+    // BMs
+    const bmLista = document.getElementById('nf-bms-lista');
+    if(bmLista) bmLista.innerHTML = ms.map(m=>`
+      <label style="display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--g200);border-radius:6px;cursor:pointer">
+        <input type="checkbox" class="nf-bm-chk" data-id="${m.ID_MEDICAO}" data-val="${m.VALOR_LIQUIDO_MEDICAO}" onchange="nfToggleBM(this)">
+        <span style="flex:1">BM ${m.NUMERO_BM} — <span style="color:#999">${m.STATUS_MEDICAO}</span></span>
+        <span style="font-weight:700">${fmt.$(m.VALOR_LIQUIDO_MEDICAO)}</span>
+        <input type="number" step="0.01" class="nf-bm-val" data-id="${m.ID_MEDICAO}" value="${m.VALOR_LIQUIDO_MEDICAO}"
+          style="width:130px;padding:4px 6px;border:1px solid var(--g300);border-radius:5px;font-size:12px;display:none" oninput="nfRecalcBruto()">
+      </label>`).join('') || '<div style="color:#999;font-size:12px">Nenhuma medição.</div>';
+    // Adiantamentos
+    const adiLista = document.getElementById('nf-adis-lista');
+    if(adiLista) adiLista.innerHTML = adis.filter(a=>a.STATUS!=='Amortizado').map(a=>`
+      <label style="display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--g200);border-radius:6px;cursor:pointer">
+        <input type="checkbox" class="nf-adi-chk" data-id="${a.ID_ADIANTAMENTO}" data-val="${a.VALOR_A_AMORTIZAR}" onchange="nfToggleAdi(this)">
+        <span style="flex:1">${a.DESCRICAO||a.TIPO} — <span style="color:#999">saldo: ${fmt.$(a.VALOR_A_AMORTIZAR)}</span></span>
+        <input type="number" step="0.01" class="nf-adi-val" data-id="${a.ID_ADIANTAMENTO}" value="${a.VALOR_A_AMORTIZAR}"
+          style="width:130px;padding:4px 6px;border:1px solid var(--g300);border-radius:5px;font-size:12px;display:none" oninput="nfRecalcBruto()">
+      </label>`).join('') || '<div style="color:#999;font-size:12px">Nenhum adiantamento COM NF em aberto.</div>';
+    // Retenções
+    const retLista = document.getElementById('nf-rets-lista');
+    if(retLista) retLista.innerHTML = rets.filter(r=>r.STATUS!=='Devolvido').map(r=>`
+      <label style="display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--g200);border-radius:6px;cursor:pointer">
+        <input type="checkbox" class="nf-ret-chk" data-id="${r.ID_RETENCAO}" data-val="${r.VALOR_A_DEVOLVER}" onchange="nfToggleRet(this)">
+        <span style="flex:1">${r.NUMERO_REFERENCIA||r.SUBTIPO} — <span style="color:#999">${r.SUBTIPO} / retido: ${fmt.$(r.VALOR_RETIDO)}</span></span>
+        <span style="font-weight:700;color:#880E4F">a devolver: ${fmt.$(r.VALOR_A_DEVOLVER)}</span>
+        <input type="number" step="0.01" class="nf-ret-val" data-id="${r.ID_RETENCAO}" value="${r.VALOR_A_DEVOLVER}"
+          style="width:130px;padding:4px 6px;border:1px solid var(--g300);border-radius:5px;font-size:12px;display:none" oninput="nfRecalcBruto()">
+      </label>`).join('') || '<div style="color:#999;font-size:12px">Nenhuma retenção em aberto.</div>';
+  }catch(e){ console.error('nfCarregarVinculos',e); }
 }
 async function nfLoadMeds(id){
   const sel=document.getElementById('nf-bm');
