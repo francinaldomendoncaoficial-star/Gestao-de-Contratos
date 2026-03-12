@@ -703,12 +703,10 @@ async function openMunicipioModal(d={}){
 
       <div class="fsec">🏦 ISS (todos os tipos)</div>
       <div class="fgrp"><label>% Base de Cálculo ISS</label>
-        <input name="ISS_PCT_BASE" type="number" step="0.01" min="0" max="100" value="_n = v => fmt.n(v); // alias
-d.ISS_PCT_BASE)||100}" placeholder="100">
+        <input name="ISS_PCT_BASE" type="number" step="0.01" min="0" max="100" value="${parseFloat(d.ISS_PCT_BASE)||100}" placeholder="100">
         <small style="color:#999;font-size:11px">Padrão 100%. Reduza se houver dedução de materiais.</small>
       </div>
-      <div class="fgrp"><label>Alíquota ISS (%)</label><input name="ISS_ALIQUOTA" type="number" step="0.01" value="_n = v => fmt.n(v); // alias
-d.ISS_ALIQUOTA)||5}"></div>
+      <div class="fgrp"><label>Alíquota ISS (%)</label><input name="ISS_ALIQUOTA" type="number" step="0.01" value="${parseFloat(d.ISS_ALIQUOTA)||''}"></div>
       <div class="fgrp"><label>ISS Retido na Fonte</label>
         <select name="ISS_RETIDO_FONTE">
           <option value="S" ${d.ISS_RETIDO_FONTE!=='N'?'selected':''}>Sim — desconta do líquido</option>
@@ -718,8 +716,7 @@ d.ISS_ALIQUOTA)||5}"></div>
 
       <div id="mun-sec-702" style="display:${tipo==='7.02'?'contents':'none'}">
         <div class="fsec">👷 INSS (somente 7.02)</div>
-        <div class="fgrp"><label>Alíquota INSS (%)</label><input name="INSS_ALIQUOTA" type="number" step="0.01" value="_n = v => fmt.n(v); // alias
-d.INSS_ALIQUOTA)||3.5}"></div>
+        <div class="fgrp"><label>Alíquota INSS (%)</label><input name="INSS_ALIQUOTA" type="number" step="0.01" value="${parseFloat(d.INSS_ALIQUOTA)||''}"></div>
         <div class="fgrp"><label>INSS Retido na Fonte</label>
           <select name="INSS_RETIDO">
             <option value="S" ${d.INSS_RETIDO!=='N'?'selected':''}>Sim — desconta do líquido</option>
@@ -731,8 +728,7 @@ d.INSS_ALIQUOTA)||3.5}"></div>
       <div id="mun-sec-701" style="display:${tipo==='7.01'?'contents':'none'}">
         <div class="fsec">📊 Outros Impostos (somente 7.01)</div>
         ${[['IRPJ','IRPJ_ALIQUOTA','IRPJ_RETIDO',1.5],['CSLL','CSLL_ALIQUOTA','CSLL_RETIDO',1],['COFINS','COFINS_ALIQUOTA','COFINS_RETIDO',3],['PIS/PASEP','PIS_PASEP_ALIQUOTA','PIS_PASEP_RETIDO',0.65]].map(([nm,aliqF,retF,def])=>`
-          <div class="fgrp"><label>Alíquota ${nm} (%)</label><input name="${aliqF}" type="number" step="0.01" value="_n = v => fmt.n(v); // alias
-d[aliqF])||def}"></div>
+          <div class="fgrp"><label>Alíquota ${nm} (%)</label><input name="${aliqF}" type="number" step="0.01" value="${parseFloat(d[aliqF])||''}"></div>
           <div class="fgrp"><label>${nm} Retido na Fonte</label>
             <select name="${retF}">
               <option value="S" ${d[retF]!=='N'?'selected':''}>Sim</option>
@@ -2285,8 +2281,7 @@ async function openNFModal(d={}){
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;align-items:end">
           <div><label style="font-size:11px;color:#666;display:block;margin-bottom:3px">% Base de Cálculo</label>
             <input name="ISS_PCT_BASE" id="nf-iss-pct" type="number" step="0.01" min="0" max="100"
-              value="_n = v => fmt.n(v); // alias
-d.ISS_PCT_BASE)||100}"
+              value="${parseFloat(d.ISS_PCT_BASE)||100}"
               oninput="nfCalcImpostos()"
               style="width:100%;padding:6px;border:1px solid var(--g300);border-radius:5px;font-size:13px">
           </div>
@@ -2296,8 +2291,7 @@ d.ISS_PCT_BASE)||100}"
           </div>
           <div><label style="font-size:11px;color:#666;display:block;margin-bottom:3px">Alíquota (%)</label>
             <input name="ISS_ALIQUOTA" id="nf-iss-aliq" type="number" step="0.01"
-              value="_n = v => fmt.n(v); // alias
-d.ISS_ALIQUOTA)||5}"
+              value="${parseFloat(d.ISS_ALIQUOTA)||''}"
               oninput="nfCalcImpostos()"
               style="width:100%;padding:6px;border:1px solid var(--g300);border-radius:5px;font-size:13px">
           </div>
@@ -2328,8 +2322,7 @@ d.ISS_ALIQUOTA)||5}"
           </div>
           <div><label style="font-size:11px;color:#666;display:block;margin-bottom:3px">Alíquota (%)</label>
             <input name="INSS_ALIQUOTA" id="nf-inss-aliq" type="number" step="0.01"
-              value="_n = v => fmt.n(v); // alias
-d.INSS_ALIQUOTA)||3.5}"
+              value="${parseFloat(d.INSS_ALIQUOTA)||''}"
               oninput="nfCalcImpostos()"
               style="width:100%;padding:6px;border:1px solid var(--g300);border-radius:5px;font-size:13px">
           </div>
