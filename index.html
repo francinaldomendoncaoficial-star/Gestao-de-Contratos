@@ -1084,7 +1084,7 @@ function _evRender(adiantamentos){
           <option value="">Adiantamento...</option>
           ${adisAtivos.map(a=>`<option value="${a.ID_ADIANTAMENTO}" ${item.idAdiantamento===a.ID_ADIANTAMENTO?'selected':''}>${a.DESCRICAO||a.TIPO} (−${fmt.$(a.VALOR_A_AMORTIZAR)})</option>`).join('')}
         </select>`:''}
-        <input type="number" step="0.01" min="0" placeholder="Valor R$" value="${item.valor||''}" oninput="_evUpdate('${g.tipo}',${idx},'valor',this.value)"
+        <input type="number" step="0.01" min="0" placeholder="Valor R$" value="${item.valor||''}" oninput="_evUpdate('${g.tipo}',${idx},'valor',this.dataset.valor||this.value)"
           style="padding:6px 8px;border:1px solid var(--g300);border-radius:5px;font-size:13px;text-align:right;width:100%">
         <button onclick="_evRemItem('${g.tipo}',${idx})" style="background:#ffebee;border:1px solid #ffcdd2;color:#b71c1c;border-radius:5px;padding:6px;cursor:pointer;font-size:14px">✕</button>
       </div>`;
