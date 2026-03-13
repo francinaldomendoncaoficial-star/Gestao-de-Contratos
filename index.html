@@ -1113,13 +1113,30 @@ pages.clientes=async function(){
   load(true); try{
     const cs=await api('getClientes',{}); S.clientes=cs; let sv='';
     const render=()=>{
-      const f=cs.filter(c=>[c.NOME_CLIENTE,c.GRUPO,c.CNPJ].join(' ').toLowerCase().includes(sv));
-      document.getElementById('cli-tb').innerHTML=f.map(c=>`<tr>
-        <td>${c.NOME_CLIENTE}</td><td>${c.GRUPO||'—'}</td><td>${c.CNPJ||'—'}</td><td>${c.TIPO||'—'}</td>
-        <td>${sb(c.ATIVO==='S'||c.ATIVO===true?'Ativo':'Inativo')}</td>
-        <td><button class="bi" onclick='openCliModal(${JSON.stringify(c)})'>✏️</button>
-            <button class="bi" onclick="delRow('CLIENTES','${c.ID_CLIENTE}',()=>{S.clientes=[];pages.clientes()})">🗑️</button></td>
-      </tr>`).join('')||'<tr><td colspan="6" style="text-align:center;color:#999;padding:16px">Nenhum</td></tr>';
+      const f=cs.filter(c=>[c.NOME_CLIENTE,c.GRUPO,c.CNPJ,c.NOME_FANTASIA,c.MUNICIPIO].join(' ').toLowerCase().includes(sv));
+      document.getElementById('cli-tb').innerHTML=f.map(c=>{
+        const matriz = c.ID_CLIENTE_MATRIZ ? cs.find(x=>x.ID_CLIENTE===c.ID_CLIENTE_MATRIZ) : null;
+        const filiais = cs.filter(x=>x.ID_CLIENTE_MATRIZ===c.ID_CLIENTE);
+        const badge = matriz
+          ? `<span style="background:#E3F2FD;color:#1565C0;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700">Filial de ${matriz.NOME_CLIENTE}</span>`
+          : filiais.length>0
+            ? `<span style="background:#E8F5E9;color:#2E7D32;font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700">Matriz (${filiais.length} filial${filiais.length>1?'is':''})</span>`
+            : '';
+        return `<tr>
+          <td>
+            <div style="font-weight:600">${c.NOME_CLIENTE}</div>
+            ${c.NOME_FANTASIA&&c.NOME_FANTASIA!==c.NOME_CLIENTE?`<div style="font-size:11px;color:#888">${c.NOME_FANTASIA}</div>`:''}
+            ${badge}
+          </td>
+          <td>${c.GRUPO||'—'}</td>
+          <td style="font-family:monospace;font-size:12px">${c.CNPJ||'—'}</td>
+          <td>${c.MUNICIPIO?`${c.MUNICIPIO}/${c.UF}`:'—'}</td>
+          <td>${c.TIPO||'—'}</td>
+          <td>${sb(c.ATIVO==='S'||c.ATIVO===true?'Ativo':'Inativo')}</td>
+          <td><button class="bi" onclick='openCliModal(${JSON.stringify(c)})'>✏️</button>
+              <button class="bi" onclick="delRow('CLIENTES','${c.ID_CLIENTE}',()=>{S.clientes=[];pages.clientes()})">🗑️</button></td>
+        </tr>`;
+      }).join('')||'<tr><td colspan="7" style="text-align:center;color:#999;padding:16px">Nenhum</td></tr>';
     };
     document.getElementById('cnt').innerHTML=`
     <div class="tbar">
@@ -1127,7 +1144,7 @@ pages.clientes=async function(){
       <div class="tr"><button class="btn bp" onclick="openCliModal()">➕ Novo Cliente</button></div>
     </div>
     <div class="card"><div class="tw"><table>
-      <thead><tr><th>Nome</th><th>Grupo</th><th>CNPJ</th><th>Tipo</th><th>Status</th><th></th></tr></thead>
+      <thead><tr><th>Nome</th><th>Grupo</th><th>CNPJ</th><th>Município/UF</th><th>Tipo</th><th>Status</th><th></th></tr></thead>
       <tbody id="cli-tb"></tbody>
     </table></div></div>`;
     render();
@@ -1136,24 +1153,134 @@ pages.clientes=async function(){
   finally{ load(false); }
 };
 function openCliModal(d={}){
+  const clientes = S.clientes||[];
+  const matrizes = clientes.filter(c=>!c.CNPJ_MATRIZ && c.ID_CLIENTE !== d.ID_CLIENTE);
   modal(`${d.ID_CLIENTE?'Editar':'Novo'} Cliente`,`
     <form id="fcli" class="fg">
-      <div class="fgrp"><label>Nome *</label><input name="NOME_CLIENTE" value="${d.NOME_CLIENTE||''}" required></div>
+
+      <div class="fsec">🏢 Identificação</div>
+
+      <!-- CNPJ com busca automática -->
+      <div class="fgrp" style="grid-column:1/-1">
+        <label>CNPJ</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input name="CNPJ" id="cli-cnpj" value="${d.CNPJ||''}" placeholder="00.000.000/0000-00"
+            style="flex:1;padding:7px 10px;border:1px solid var(--g300);border-radius:6px;font-size:13px;font-family:monospace"
+            oninput="cliMascaraCNPJ(this)">
+          <button type="button" class="btn" style="background:#1565C0;color:#fff;padding:7px 16px;font-size:12px;white-space:nowrap"
+            onclick="cliBuscarCNPJ()">🔍 Buscar Receita Federal</button>
+          <span id="cli-cnpj-status" style="font-size:12px;color:#999"></span>
+        </div>
+      </div>
+
+      <div class="fgrp"><label>Razão Social / Nome *</label>
+        <input name="NOME_CLIENTE" id="cli-nome" value="${d.NOME_CLIENTE||''}" required></div>
+      <div class="fgrp"><label>Nome Fantasia</label>
+        <input name="NOME_FANTASIA" id="cli-fantasia" value="${d.NOME_FANTASIA||''}"></div>
+      <div class="fgrp"><label>Razão Social Completa</label>
+        <input name="RAZAO_SOCIAL" id="cli-razao" value="${d.RAZAO_SOCIAL||''}"></div>
+      <div class="fgrp"><label>Situação Cadastral</label>
+        <input name="SITUACAO_CADASTRAL" id="cli-situacao" value="${d.SITUACAO_CADASTRAL||''}" readonly
+          style="background:#f5f5f5;color:#666"></div>
+
+      <div class="fsec">📋 Dados Complementares</div>
       <div class="fgrp"><label>Grupo</label><input name="GRUPO" value="${d.GRUPO||''}"></div>
-      <div class="fgrp"><label>CNPJ</label><input name="CNPJ" value="${d.CNPJ||''}"></div>
-      <div class="fgrp"><label>Tipo</label><select name="TIPO">${['Privado','Público','Misto'].map(o=>`<option ${d.TIPO===o?'selected':''}>${o}</option>`).join('')}</select></div>
+      <div class="fgrp"><label>Tipo</label>
+        <select name="TIPO">${['Privado','Público','Misto'].map(o=>`<option ${d.TIPO===o?'selected':''}>${o}</option>`).join('')}</select></div>
+      <div class="fgrp"><label>Ativo</label>
+        <select name="ATIVO"><option value="S" ${d.ATIVO!=='N'?'selected':''}>Sim</option><option value="N" ${d.ATIVO==='N'?'selected':''}>Não</option></select></div>
+
+      <div class="fsec">📞 Contato</div>
       <div class="fgrp"><label>Contato</label><input name="CONTATO" value="${d.CONTATO||''}"></div>
       <div class="fgrp"><label>Email</label><input name="EMAIL" type="email" value="${d.EMAIL||''}"></div>
       <div class="fgrp"><label>Telefone</label><input name="TELEFONE" value="${d.TELEFONE||''}"></div>
-      <div class="fgrp"><label>Ativo</label><select name="ATIVO"><option value="S">Sim</option><option value="N" ${d.ATIVO==='N'?'selected':''}>Não</option></select></div>
+
+      <div class="fsec">📍 Endereço</div>
+      <div class="fgrp" style="grid-column:span 2"><label>Logradouro</label>
+        <input name="LOGRADOURO" id="cli-logr" value="${d.LOGRADOURO||''}"></div>
+      <div class="fgrp"><label>Número</label>
+        <input name="NUMERO" id="cli-num" value="${d.NUMERO||''}"></div>
+      <div class="fgrp"><label>Complemento</label>
+        <input name="COMPLEMENTO" value="${d.COMPLEMENTO||''}"></div>
+      <div class="fgrp"><label>Bairro</label>
+        <input name="BAIRRO" id="cli-bairro" value="${d.BAIRRO||''}"></div>
+      <div class="fgrp"><label>Município</label>
+        <input name="MUNICIPIO" id="cli-mun" value="${d.MUNICIPIO||''}"></div>
+      <div class="fgrp"><label>UF</label>
+        <input name="UF" id="cli-uf" value="${d.UF||''}" style="text-transform:uppercase" maxlength="2"></div>
+      <div class="fgrp"><label>CEP</label>
+        <input name="CEP" id="cli-cep" value="${d.CEP||''}"></div>
+
+      <div class="fsec">🏭 Filial / Matriz</div>
+      <div class="fgrp full">
+        <label>Esta empresa é filial de:</label>
+        <select name="ID_CLIENTE_MATRIZ" id="cli-matriz">
+          <option value="">— É a Matriz (ou independente) —</option>
+          ${matrizes.map(c=>`<option value="${c.ID_CLIENTE}" ${d.ID_CLIENTE_MATRIZ===c.ID_CLIENTE?'selected':''}>${c.NOME_CLIENTE}${c.CNPJ?' ('+c.CNPJ+')':''}</option>`).join('')}
+        </select>
+        <small style="color:#999;font-size:11px">Ao vincular uma matriz, o CNPJ dela será salvo automaticamente em CNPJ_MATRIZ.</small>
+      </div>
+      <input type="hidden" name="CNPJ_MATRIZ" id="cli-cnpj-matriz" value="${d.CNPJ_MATRIZ||''}">
+
       <div class="fgrp full"><label>Observações</label><textarea name="OBSERVACOES">${d.OBSERVACOES||''}</textarea></div>
-      ${d.ID_CLIENTE?`<input type="hidden" name="ID_CLIENTE" value="${d.ID_CLIENTE}">`:''}
-    </form>`, async()=>{
-    const obj=fdata('fcli'); load(true);
+      ${d.ID_CLIENTE?`<input type="hidden" name="ID_CLIENTE" value="${d.ID_CLIENTE}">` :''}
+    </form>`,
+  async()=>{
+    const obj=fdata('fcli');
+    // Ao salvar, preencher CNPJ_MATRIZ automaticamente se escolheu uma matriz
+    if(obj.ID_CLIENTE_MATRIZ){
+      const matriz = (S.clientes||[]).find(c=>c.ID_CLIENTE===obj.ID_CLIENTE_MATRIZ);
+      if(matriz) obj.CNPJ_MATRIZ = matriz.CNPJ||'';
+    } else {
+      obj.CNPJ_MATRIZ='';
+      obj.ID_CLIENTE_MATRIZ='';
+    }
+    load(true);
     try{ await api('saveCliente',obj); closeModal(); toast('Salvo!'); S.clientes=[]; pages.clientes(); }
     catch(e){ toast(e.message,'err'); } finally{ load(false); }
   });
 }
+
+function cliMascaraCNPJ(inp){
+  let v = inp.value.replace(/\D/g,'').slice(0,14);
+  if(v.length>12) v=v.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2}).*/,'$1.$2.$3/$4-$5');
+  else if(v.length>8) v=v.replace(/^(\d{2})(\d{3})(\d{3})(\d{4}).*/,'$1.$2.$3/$4');
+  else if(v.length>5) v=v.replace(/^(\d{2})(\d{3})(\d{3}).*/,'$1.$2.$3');
+  else if(v.length>2) v=v.replace(/^(\d{2})(\d{3}).*/,'$1.$2');
+  inp.value=v;
+}
+
+async function cliBuscarCNPJ(){
+  const cnpj = (document.getElementById('cli-cnpj')?.value||'').replace(/\D/g,'');
+  if(cnpj.length!==14){ toast('CNPJ deve ter 14 dígitos','err'); return; }
+  const status = document.getElementById('cli-cnpj-status');
+  if(status) status.textContent='⏳ Consultando...';
+  try{
+    // API pública ReceitaWS — sem autenticação, gratuita
+    const resp = await fetch(`https://receitaws.com.br/v1/cnpj/${cnpj}`);
+    const data = await resp.json();
+    if(data.status==='ERROR'){ toast(data.message||'CNPJ não encontrado','err'); if(status) status.textContent='❌'; return; }
+    // Preencher campos
+    const set = (id,v)=>{ const el=document.getElementById(id); if(el&&v) el.value=v; };
+    set('cli-nome',     data.nome);
+    set('cli-fantasia', data.fantasia||data.nome);
+    set('cli-razao',    data.nome);
+    set('cli-situacao', data.situacao);
+    set('cli-logr',     data.logradouro);
+    set('cli-num',      data.numero);
+    set('cli-bairro',   data.bairro);
+    set('cli-mun',      data.municipio);
+    set('cli-uf',       data.uf);
+    set('cli-cep',      data.cep);
+    if(status) status.textContent='✅ Dados preenchidos!';
+    setTimeout(()=>{ if(status) status.textContent=''; },3000);
+    toast(`${data.nome} — ${data.situacao}`);
+  }catch(e){
+    if(status) status.textContent='❌ Falhou';
+    toast('Erro ao consultar ReceitaWS. Tente novamente ou preencha manualmente.','err');
+  }
+}
+
 
 // ============================================================
 // CONTRATOS
