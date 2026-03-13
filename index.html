@@ -2613,19 +2613,19 @@ async function openNFModal(d={}){
       if(tipoFat==='MEDICAO'){
         const bms = [...document.querySelectorAll('.nf-bm-chk:checked')].map(chk=>({
           idMedicao: chk.dataset.id,
-          valorRateado: fmt.n(document.querySelector(`.nf-bm-val[data-id="${chk.dataset.id}"]`)?.value || chk.dataset.val),
+          valorRateado: parseFloat(document.querySelector(`.nf-bm-val[data-id="${chk.dataset.id}"]`)?.value || chk.dataset.val) || 0,
         }));
         await api('saveRateiosBM',{idNF:nfId, idContrato:obj.ID_CONTRATO, centroCusto:obj.CENTRO_CUSTO, bms});
       } else if(tipoFat==='ADIANTAMENTO'){
         const vinculos = [...document.querySelectorAll('.nf-adi-chk:checked')].map(chk=>({
           idAdiantamento: chk.dataset.id,
-          valorVinculado: fmt.n(document.querySelector(`.nf-adi-val[data-id="${chk.dataset.id}"]`)?.value || chk.dataset.val),
+          valorVinculado: parseFloat(document.querySelector(`.nf-adi-val[data-id="${chk.dataset.id}"]`)?.value || chk.dataset.val) || 0,
         }));
         await api('saveVinculosNFAdi',{idNF:nfId, idContrato:obj.ID_CONTRATO, centroCusto:obj.CENTRO_CUSTO, vinculos});
       } else if(tipoFat==='RETENCAO'){
         const vinculos = [...document.querySelectorAll('.nf-ret-chk:checked')].map(chk=>({
           idRetencao: chk.dataset.id,
-          valorDevolvido: fmt.n(document.querySelector(`.nf-ret-val[data-id="${chk.dataset.id}"]`)?.value || chk.dataset.val),
+          valorDevolvido: parseFloat(document.querySelector(`.nf-ret-val[data-id="${chk.dataset.id}"]`)?.value || chk.dataset.val) || 0,
         }));
         await api('saveVinculosNFRet',{idNF:nfId, idContrato:obj.ID_CONTRATO, centroCusto:obj.CENTRO_CUSTO, vinculos});
       }
@@ -2669,17 +2669,17 @@ function nfRecalcBruto(){
   if(tipo==='MEDICAO'){
     document.querySelectorAll('.nf-bm-chk:checked').forEach(chk=>{
       const v=document.querySelector(`.nf-bm-val[data-id="${chk.dataset.id}"]`);
-      total += fmt.n(v?.value||chk.dataset.val);
+      total += parseFloat(v?.value||chk.dataset.val)||0;
     });
   } else if(tipo==='ADIANTAMENTO'){
     document.querySelectorAll('.nf-adi-chk:checked').forEach(chk=>{
       const v=document.querySelector(`.nf-adi-val[data-id="${chk.dataset.id}"]`);
-      total += fmt.n(v?.value||chk.dataset.val);
+      total += parseFloat(v?.value||chk.dataset.val)||0;
     });
   } else if(tipo==='RETENCAO'){
     document.querySelectorAll('.nf-ret-chk:checked').forEach(chk=>{
       const v=document.querySelector(`.nf-ret-val[data-id="${chk.dataset.id}"]`);
-      total += fmt.n(v?.value||chk.dataset.val);
+      total += parseFloat(v?.value||chk.dataset.val)||0;
     });
   }
   if(total > 0){
