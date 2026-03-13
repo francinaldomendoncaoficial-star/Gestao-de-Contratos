@@ -1553,6 +1553,7 @@ async function _dtMeds(c){
         <td>${sb(m.STATUS_MEDICAO)}</td>
         <td style="white-space:nowrap">
           <button class="bi" title="Eventos Financeiros" onclick="openEventosMedModal('${m.ID_MEDICAO}','BM ${m.NUMERO_BM}','${c.ID_CONTRATO}','${c.CENTRO_CUSTO||''}',${fmt.n(m.VALOR_MEDIDO_BRUTO)},()=>_dtMeds(${JSON.stringify(c)}))">⚡</button>
+          ${m.DOCUMENTO_URL?`<button class="bi" title="Ver Anexo" onclick="window.open('${m.DOCUMENTO_URL}','_blank')">📎</button>`:''}
           <button class="bi" onclick='openMedModal(${JSON.stringify(m)})'>✏️</button>
         </td>
       </tr>`).join('')||'<tr><td colspan="11" style="text-align:center;color:#999;padding:14px">Sem medições</td></tr>'}</tbody>
@@ -2023,6 +2024,7 @@ pages.medicoes=async function(){
           <td>${sb(m.STATUS_MEDICAO)}</td>
           <td style="white-space:nowrap">
             <button class="bi" title="Eventos Financeiros" onclick="openEventosMedModal('${m.ID_MEDICAO}','BM ${m.NUMERO_BM}','${m.ID_CONTRATO}','${(m.CENTRO_CUSTO||'').replace(/'/g,"\\'")}',${fmt.n(m.VALOR_MEDIDO_BRUTO)},pages.medicoes)">⚡</button>
+            ${m.DOCUMENTO_URL?`<button class="bi" title="Ver Anexo" onclick="window.open('${m.DOCUMENTO_URL}','_blank')">📎</button>`:''}
             <button class="bi" onclick='openMedModal(${JSON.stringify(m)})'>✏️</button>
             <button class="bi" onclick="delRow('MEDICOES','${m.ID_MEDICAO}',pages.medicoes)">🗑️</button>
           </td>
@@ -2276,6 +2278,7 @@ function filtrarMeds(){
     <td>${sb(m.STATUS_MEDICAO)}</td>
     <td style="white-space:nowrap">
       <button class="bi" title="Eventos Financeiros" onclick="openEventosMedModal('${m.ID_MEDICAO}','BM ${m.NUMERO_BM}','${m.ID_CONTRATO}','${(m.CENTRO_CUSTO||'').replace(/'/g,"\\'")}',${fmt.n(m.VALOR_MEDIDO_BRUTO)},pages.medicoes)">⚡</button>
+      ${m.DOCUMENTO_URL?`<button class="bi" title="Ver Anexo" onclick="window.open('${m.DOCUMENTO_URL}','_blank')">📎</button>`:''}
       <button class="bi" onclick='openMedModal(${JSON.stringify(m)})'>✏️</button>
       <button class="bi" onclick="delRow('MEDICOES','${m.ID_MEDICAO}',pages.medicoes)">🗑️</button>
     </td>
@@ -2502,9 +2505,11 @@ async function openNFModal(d={}){
       <div id="nf-sec-inss" style="grid-column:1/-1;background:var(--g50);border-radius:8px;padding:12px;margin-bottom:4px;display:${(d.TIPO_ATIVIDADE||'7.02')==='7.02'?'block':'none'}">
         <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:var(--g700)">👷 INSS <span style="font-weight:400;font-size:11px;color:#999">(apenas 7.02)</span></div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:end">
-          <div><label style="font-size:11px;color:#666;display:block;margin-bottom:3px">Base (R$ Bruto)</label>
-            <input id="nf-inss-base" type="text" readonly
-              style="width:100%;padding:6px;background:#f5f5f5;border:1px solid var(--g200);border-radius:5px;font-size:13px;color:#666">
+          <div><label style="font-size:11px;color:#666;display:block;margin-bottom:3px">% Base de Cálculo</label>
+            <input name="INSS_PCT_BASE" id="nf-inss-base" type="number" step="0.01" data-pct
+              value="${parseFloat(d.INSS_PCT_BASE)||100}"
+              oninput="nfCalcImpostos()"
+              style="width:100%;padding:6px;border:1px solid var(--g300);border-radius:5px;font-size:13px">
           </div>
           <div><label style="font-size:11px;color:#666;display:block;margin-bottom:3px">Alíquota (%)</label>
             <input name="INSS_ALIQUOTA" id="nf-inss-aliq" type="number" step="0.01" data-pct
@@ -2538,12 +2543,16 @@ async function openNFModal(d={}){
         ].map(([nm,aliqF,retF,id,defAliq,retVal])=>`
           <div style="background:var(--g50);border-radius:8px;padding:10px;margin-bottom:4px">
             <div style="font-weight:700;font-size:12px;margin-bottom:6px;color:var(--g700)">📊 ${nm}</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;align-items:end">
-              <div><label style="font-size:11px;color:#666;display:block;margin-bottom:3px">Base (R$ Bruto)</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;align-items:end">
+              <div><label style="font-size:11px;color:#666;display:block;margin-bottom:3px">% Base</label>
+                <input id="${id}-pct" type="number" step="0.01" data-pct value="100"
+                  oninput="nfCalcImpostos()" style="width:100%;padding:5px;border:1px solid var(--g300);border-radius:5px;font-size:12px">
+              </div>
+              <div><label style="font-size:11px;color:#666;display:block;margin-bottom:3px">Base (R$)</label>
                 <input id="${id}-base" type="text" readonly style="width:100%;padding:5px;background:#f5f5f5;border:1px solid var(--g200);border-radius:5px;font-size:12px;color:#666">
               </div>
               <div><label style="font-size:11px;color:#666;display:block;margin-bottom:3px">Alíquota (%)</label>
-                <input name="${aliqF}" id="${id}-aliq" type="number" step="0.01" value="${defAliq}"
+                <input name="${aliqF}" id="${id}-aliq" type="number" step="0.01" data-pct value="${defAliq}"
                   oninput="nfCalcImpostos()" style="width:100%;padding:5px;border:1px solid var(--g300);border-radius:5px;font-size:12px">
               </div>
               <div><label style="font-size:11px;color:#666;display:block;margin-bottom:3px">Valor (R$)</label>
@@ -2740,53 +2749,52 @@ function nfToggleTipoAtv(tipo){
 }
 
 function nfCalcImpostos(){
-  const bruto = fmt.n(document.getElementById('nf-bruto')?.value || 0);
+  // Ler valor bruto — campo type=number, usar parseFloat direto
+  const bruto = parseFloat(document.getElementById('nf-bruto')?.value) || 0;
   if(!bruto) return;
   const tipo = document.getElementById('nf-tipo-atv')?.value || '7.02';
   const br = v => 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const pct = (el, def=100) => Math.min(100, Math.max(0, parseFloat(document.getElementById(el)?.value||def)||def));
+  const aliq = (el) => parseFloat(document.getElementById(el)?.value||0)||0;
+  const rf   = (el) => document.getElementById(el)?.checked ?? true;
 
   // ISS
-  const pctBase = Math.min(100, Math.max(0, parseFloat(document.getElementById('nf-iss-pct')?.value||100)||100));
-  const baseISS = bruto * (pctBase/100);
-  const aliqISS = parseFloat(document.getElementById('nf-iss-aliq')?.value||0)||0;
-  const valISS  = baseISS * (aliqISS/100);
-  const issRF   = document.getElementById('nf-iss-rf')?.checked;
+  const baseISS = bruto * (pct('nf-iss-pct')/100);
+  const valISS  = baseISS * (aliq('nf-iss-aliq')/100);
+  const issRetido = rf('nf-iss-rf');
   _setEl('nf-iss-base', br(baseISS));
   _setEl('nf-iss-val',  br(valISS));
-  _setEl('nf-iss-rf-val', issRF?'S':'N');
   const issInfoEl = document.getElementById('nf-iss-info');
-  if(issInfoEl){ issInfoEl.style.display = issRF?'none':'inline'; _setEl('nf-iss-info-val', br(valISS)); }
+  if(issInfoEl){ issInfoEl.style.display = issRetido?'none':'inline'; _setEl('nf-iss-info-val', br(valISS)); }
 
-  let totalRetidos = issRF ? valISS : 0;
-  let totalProprios = issRF ? 0 : valISS;
+  let totalRetidos  = issRetido  ? valISS : 0;
+  let totalProprios = issRetido  ? 0 : valISS;
 
-  // INSS — 7.02
+  // INSS — 7.02 (base = bruto × pct_base)
   if(tipo==='7.02'){
-    const aliqINSS = parseFloat(document.getElementById('nf-inss-aliq')?.value||0)||0;
-    const valINSS  = bruto * (aliqINSS/100);
-    const inssRF   = document.getElementById('nf-inss-rf')?.checked;
-    _setEl('nf-inss-base', br(bruto));
+    const baseINSS = bruto * (pct('nf-inss-base', 100)/100);
+    const valINSS  = baseINSS * (aliq('nf-inss-aliq')/100);
+    const inssRetido = rf('nf-inss-rf');
     _setEl('nf-inss-val',  br(valINSS));
-    _setEl('nf-inss-rf-val', inssRF?'S':'N');
     const inssInfoEl = document.getElementById('nf-inss-info');
-    if(inssInfoEl){ inssInfoEl.style.display = inssRF?'none':'inline'; _setEl('nf-inss-info-val', br(valINSS)); }
-    totalRetidos  += inssRF ? valINSS : 0;
-    totalProprios += inssRF ? 0 : valINSS;
+    if(inssInfoEl){ inssInfoEl.style.display = inssRetido?'none':'inline'; _setEl('nf-inss-info-val', br(valINSS)); }
+    totalRetidos  += inssRetido ? valINSS : 0;
+    totalProprios += inssRetido ? 0 : valINSS;
   }
 
-  // 7.01 — IRPJ, CSLL, COFINS, PIS
+  // 7.01 — IRPJ, CSLL, COFINS, PIS (cada um com seu pct_base)
   if(tipo==='7.01'){
-    [['nf-irpj','IRPJ'],['nf-csll','CSLL'],['nf-cofins','COFINS'],['nf-pis','PIS']].forEach(([id])=>{
-      const aliq = parseFloat(document.getElementById(id+'-aliq')?.value||0)||0;
-      const val  = bruto * (aliq/100);
-      const rf   = document.getElementById(id+'-rf')?.checked;
-      _setEl(id+'-base', br(bruto));
+    [['nf-irpj','nf-irpj-pct'],['nf-csll','nf-csll-pct'],
+     ['nf-cofins','nf-cofins-pct'],['nf-pis','nf-pis-pct']].forEach(([id, pctId])=>{
+      const base701 = bruto * (pct(pctId)/100);
+      const val  = base701 * (aliq(id+'-aliq')/100);
+      const retido = rf(id+'-rf');
+      _setEl(id+'-base', br(base701));
       _setEl(id+'-val',  br(val));
-      _setEl(id+'-rf-val', rf?'S':'N');
       const infoEl = document.getElementById(id+'-info');
-      if(infoEl){ infoEl.style.display = rf?'none':'inline'; _setEl(id+'-info-val', br(val)); }
-      totalRetidos  += rf ? val : 0;
-      totalProprios += rf ? 0 : val;
+      if(infoEl){ infoEl.style.display = retido?'none':'inline'; _setEl(id+'-info-val', br(val)); }
+      totalRetidos  += retido ? val : 0;
+      totalProprios += retido ? 0 : val;
     });
   }
 
@@ -2837,12 +2845,12 @@ async function nfBuscarRegrasTrib(cidade, tipoForcado){
     if(issPct  && regra.ISS_PCT_BASE) issPct.value  = regra.ISS_PCT_BASE;
     if(issRF) issRF.checked = regra.ISS_RETIDO_FONTE !== 'N';
     // INSS
-    const inssAliq = document.getElementById('nf-inss-aliq');
-    const inssRF   = document.getElementById('nf-inss-rf');
-    const inssBase = document.getElementById('nf-inss-base');
-    if(inssAliq && regra.INSS_ALIQUOTA) inssAliq.value = regra.INSS_ALIQUOTA;
-    if(inssBase && regra.INSS_PCT_BASE)  inssBase.value = regra.INSS_PCT_BASE;
-    if(inssRF) inssRF.checked = regra.INSS_RETIDO !== 'N';
+    const inssAliqEl = document.getElementById('nf-inss-aliq');
+    const inssRFEl   = document.getElementById('nf-inss-rf');
+    const inssBaseEl = document.getElementById('nf-inss-base');
+    if(inssAliqEl && regra.INSS_ALIQUOTA) inssAliqEl.value = regra.INSS_ALIQUOTA;
+    if(inssBaseEl && regra.INSS_PCT_BASE) inssBaseEl.value = regra.INSS_PCT_BASE;
+    if(inssRFEl) inssRFEl.checked = regra.INSS_RETIDO !== 'N';
     // 7.01
     [['nf-irpj','IRPJ_PCT_BASE','IRPJ_ALIQUOTA','IRPJ_RETIDO'],
      ['nf-csll','CSLL_PCT_BASE','CSLL_ALIQUOTA','CSLL_RETIDO'],
