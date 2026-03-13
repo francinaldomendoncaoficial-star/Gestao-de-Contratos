@@ -2292,7 +2292,7 @@ async function openNFModal(d={}){
         </select>
       </div>
       <div class="fgrp"><label>Tipo de Atividade</label>
-        <select name="TIPO_ATIVIDADE" id="nf-tipo-atv" onchange="nfToggleTipoAtv(this.value)">
+        <select name="TIPO_ATIVIDADE" id="nf-tipo-atv" onchange="nfToggleTipoAtv(this.value);nfBuscarRegrasTrib(document.getElementById('nf-mun')?.value,this.value)">
           <option value="7.02" ${(d.TIPO_ATIVIDADE||'7.02')==='7.02'?'selected':''}>7.02 — Obras Civis (ISS + INSS)</option>
           <option value="7.01" ${d.TIPO_ATIVIDADE==='7.01'?'selected':''}>7.01 — Serviços Gerais (ISS + IRPJ/CSLL/COFINS/PIS)</option>
         </select>
@@ -2655,14 +2655,20 @@ async function nfLoadMunicipios(uf){
   }catch(e){ sel.innerHTML='<option>Erro</option>'; }
 }
 
-async function nfBuscarRegrasTrib(cidade){
+async function nfBuscarRegrasTrib(cidade, tipoForcado){
   const uf = document.getElementById('nf-uf-val')?.value || document.getElementById('nf-uf')?.value;
   if(!cidade||!uf) return;
   try{
-    const regra = await api('getMunicipioTribPorCidade',{uf, cidade});
-    if(!regra){ 
-      document.getElementById('nf-trib-alerta').style.display='none';
-      return; 
+    // Buscar pela atividade atual do select (ou forçada)
+    const tipoAtual = tipoForcado || document.getElementById('nf-tipo-atv')?.value || '7.02';
+    const regra = await api('getMunicipioTribPorCidade',{uf, cidade, tipo_atividade: tipoAtual});
+    if(!regra){
+      // Tentar sem filtro de tipo — pode não ter esse tipo cadastrado
+      document.getElementById('nf-trib-alerta').style.display='';
+      document.getElementById('nf-trib-alerta').textContent=`⚠️ Sem regras tributárias para ${cidade}/${uf} — tipo ${tipoAtual}. Preencha manualmente.`;
+      document.getElementById('nf-trib-alerta').className='al al-d';
+      setTimeout(()=>{ const a=document.getElementById('nf-trib-alerta'); if(a) a.className='al al-i'; },3000);
+      return;
     }
     // Preencher tipo de atividade
     const tipoEl = document.getElementById('nf-tipo-atv');
@@ -2677,14 +2683,20 @@ async function nfBuscarRegrasTrib(cidade){
     // INSS
     const inssAliq = document.getElementById('nf-inss-aliq');
     const inssRF   = document.getElementById('nf-inss-rf');
+    const inssBase = document.getElementById('nf-inss-base');
     if(inssAliq && regra.INSS_ALIQUOTA) inssAliq.value = regra.INSS_ALIQUOTA;
+    if(inssBase && regra.INSS_PCT_BASE)  inssBase.value = regra.INSS_PCT_BASE;
     if(inssRF) inssRF.checked = regra.INSS_RETIDO !== 'N';
     // 7.01
-    [['nf-irpj','IRPJ_ALIQUOTA','IRPJ_RETIDO'],['nf-csll','CSLL_ALIQUOTA','CSLL_RETIDO'],
-     ['nf-cofins','COFINS_ALIQUOTA','COFINS_RETIDO'],['nf-pis','PIS_PASEP_ALIQUOTA','PIS_PASEP_RETIDO']].forEach(([id,aliqF,retF])=>{
+    [['nf-irpj','IRPJ_PCT_BASE','IRPJ_ALIQUOTA','IRPJ_RETIDO'],
+     ['nf-csll','CSLL_PCT_BASE','CSLL_ALIQUOTA','CSLL_RETIDO'],
+     ['nf-cofins','COFINS_PCT_BASE','COFINS_ALIQUOTA','COFINS_RETIDO'],
+     ['nf-pis','PIS_PASEP_PCT_BASE','PIS_PASEP_ALIQUOTA','PIS_PASEP_RETIDO']].forEach(([id,pctF,aliqF,retF])=>{
+      const pctEl  = document.getElementById(id+'-pct');
       const aliqEl = document.getElementById(id+'-aliq');
       const rfEl   = document.getElementById(id+'-rf');
-      if(aliqEl && regra[aliqF]) aliqEl.value = regra[aliqF];
+      if(pctEl  && regra[pctF])  pctEl.value  = regra[pctF];
+      if(aliqEl && regra[aliqF]) aliqEl.value  = regra[aliqF];
       if(rfEl) rfEl.checked = regra[retF] !== 'N';
     });
     nfCalcImpostos();
