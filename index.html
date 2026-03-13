@@ -1256,25 +1256,54 @@ async function cliBuscarCNPJ(){
   const status = document.getElementById('cli-cnpj-status');
   if(status) status.textContent='⏳ Consultando...';
   try{
-    // API pública ReceitaWS — sem autenticação, gratuita
-    const resp = await fetch(`https://receitaws.com.br/v1/cnpj/${cnpj}`);
-    const data = await resp.json();
-    if(data.status==='ERROR'){ toast(data.message||'CNPJ não encontrado','err'); if(status) status.textContent='❌'; return; }
-    // Preencher campos
+    // BrasilAPI — aceita CORS, sem autenticação, gratuita
+    let data = null;
+    const T = 8000;
+    try{
+      const r = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`,{signal:AbortSignal.timeout(T)});
+      if(r.ok) data = await r.json();
+    }catch(e){}
+    // Fallback 1: ReceitaWS
+    if(!data){
+      try{
+        const r = await fetch(`https://receitaws.com.br/v1/cnpj/${cnpj}`,{signal:AbortSignal.timeout(T)});
+        if(r.ok){ const d=await r.json(); if(d.status!=='ERROR') data={
+          razao_social:d.nome, nome_fantasia:d.fantasia, descricao_situacao_cadastral:d.situacao,
+          logradouro:d.logradouro, numero:d.numero, complemento:d.complemento,
+          bairro:d.bairro, municipio:d.municipio, uf:d.uf, cep:(d.cep||'').replace(/\D/g,''),
+          email:d.email
+        };}
+      }catch(e){}
+    }
+    // Fallback 2: minhareceita.org
+    if(!data){
+      try{
+        const r = await fetch(`https://minhareceita.org/${cnpj}`,{signal:AbortSignal.timeout(T)});
+        if(r.ok){ const d=await r.json(); if(!d.error) data=d; }
+      }catch(e){}
+    }
+    if(!data){ toast('CNPJ não encontrado em nenhuma base','err'); if(status) status.textContent='❌'; return; }
+    // Preencher campos — normaliza BrasilAPI e fallbacks
     const set = (id,v)=>{ const el=document.getElementById(id); if(el&&v) el.value=v; };
-    set('cli-nome',     data.nome);
-    set('cli-fantasia', data.fantasia||data.nome);
-    set('cli-razao',    data.nome);
-    set('cli-situacao', data.situacao);
+    const nome = data.razao_social || data.nome || '';
+    const fantasia = data.nome_fantasia || data.fantasia || nome;
+    const situacao = data.descricao_situacao_cadastral || data.situacao || '';
+    const cep = (data.cep||'').replace(/\D/g,'');
+    const cepFmt = cep.length===8 ? cep.slice(0,5)+'-'+cep.slice(5) : cep;
+    set('cli-nome',     nome);
+    set('cli-fantasia', fantasia);
+    set('cli-razao',    nome);
+    set('cli-situacao', situacao);
     set('cli-logr',     data.logradouro);
     set('cli-num',      data.numero);
     set('cli-bairro',   data.bairro);
     set('cli-mun',      data.municipio);
     set('cli-uf',       data.uf);
-    set('cli-cep',      data.cep);
+    set('cli-cep',      cepFmt);
+    if(data.email) set('cli-email', data.email);
     if(status) status.textContent='✅ Dados preenchidos!';
     setTimeout(()=>{ if(status) status.textContent=''; },3000);
-    toast(`${data.nome} — ${data.situacao}`);
+    toast(`${nome}${situacao?' — '+situacao:''}`);
   }catch(e){
     if(status) status.textContent='❌ Falhou';
     toast('Erro ao consultar ReceitaWS. Tente novamente ou preencha manualmente.','err');
