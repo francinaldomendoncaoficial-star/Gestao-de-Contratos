@@ -2749,8 +2749,9 @@ function nfToggleTipoAtv(tipo){
 }
 
 function nfCalcImpostos(){
-  // Ler valor bruto — campo type=number, usar parseFloat direto
-  const bruto = parseFloat(document.getElementById('nf-bruto')?.value) || 0;
+  // Ler valor bruto — pode ser type=text com máscara (usar dataset.valor) ou type=number
+  const brutoEl = document.getElementById('nf-bruto');
+  const bruto = parseFloat(brutoEl?.dataset?.valor || brutoEl?.value) || 0;
   if(!bruto) return;
   const tipo = document.getElementById('nf-tipo-atv')?.value || '7.02';
   const br = v => 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
