@@ -760,7 +760,10 @@ async function openMunicipioModal(d={}){
     try{ await api('saveMunicipioTrib',obj); closeModal(); toast('Salvo!'); pages.municipios(); }
     catch(e){ toast(e.message,'err'); } finally{ load(false); }
   });
-  if(d.UF) munLoadCidades(d.UF, d.CIDADE);
+  setTimeout(()=>{
+    if(d.UF) munLoadCidades(d.UF, d.CIDADE);
+    munToggleTipo(tipo); // garante visibilidade correta da seção ao editar
+  }, 50);
 }
 function munToggleTipo(tipo){
   const s702=document.getElementById('mun-sec-702');
@@ -772,9 +775,18 @@ async function munLoadCidades(uf, selCidade=''){
   const sel=document.getElementById('mun-cidade'); if(!sel||!uf) return;
   sel.innerHTML='<option>Carregando...</option>';
   try{
-    const cids = await api('getCidades',{uf});
+    // API IBGE — gratuita, sem autenticação, retorna todos os municípios do estado
+    const resp = await fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios?orderBy=nome`);
+    const data = await resp.json();
+    const cids = data.map(m=>m.nome);
     sel.innerHTML=`<option value="">— Selecione —</option>`+cids.map(c=>`<option value="${c}" ${c===selCidade?'selected':''}>${c}</option>`).join('');
-  }catch(e){ sel.innerHTML='<option>Erro</option>'; }
+  }catch(e){
+    // fallback para backend se IBGE falhar
+    try{
+      const cids = await api('getCidades',{uf});
+      sel.innerHTML=`<option value="">— Selecione —</option>`+cids.map(c=>`<option value="${c}" ${c===selCidade?'selected':''}>${c}</option>`).join('');
+    }catch(e2){ sel.innerHTML='<option>Erro ao carregar cidades</option>'; }
+  }
 }
 
 // Funções auxiliares de formato decimal para %
